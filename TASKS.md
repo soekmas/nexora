@@ -207,81 +207,81 @@ Do not begin business domains until Gate 1 passes.
 
 # PHASE 2 --- IDENTITY
 
--   [ ] User account model.
--   [ ] Role model.
--   [ ] Permission model.
--   [ ] User-role assignment.
--   [ ] Role-permission assignment.
--   [ ] User scope.
--   [ ] Session model.
--   [ ] Login attempts.
+-   [x] User account model.
+-   [x] Role model.
+-   [x] Permission model.
+-   [x] User-role assignment.
+-   [x] Role-permission assignment.
+-   [x] User scope.
+-   [x] Session model.
+-   [x] Login attempts.
 -   [ ] MFA foundation.
--   [ ] Password policy.
--   [ ] Authentication flow.
--   [ ] Authorization integration.
--   [ ] Audit/security events.
--   [ ] Tests.
+-   [x] Password policy.
+-   [x] Authentication flow.
+-   [x] Authorization integration.
+-   [x] Audit/security events.
+-   [x] Tests.
 
 ### Gate 2
 
--   [ ] Tenant isolation.
--   [ ] Scope isolation.
--   [ ] Permission tests.
--   [ ] SoD tests.
+-   [x] Tenant isolation.
+-   [x] Scope isolation.
+-   [x] Permission tests.
+-   [x] SoD tests.
 -   [ ] MFA privileged path.
--   [ ] Session revocation.
+-   [x] Session revocation.
 
 ------------------------------------------------------------------------
 
 # PHASE 3 --- ORGANIZATION
 
--   [ ] Company.
--   [ ] Region.
--   [ ] Store.
--   [ ] Warehouse.
--   [ ] Terminal.
--   [ ] User scope assignment.
--   [ ] Terminal/store relationship.
--   [ ] Organization APIs.
--   [ ] Authorization integration.
--   [ ] Audit.
--   [ ] Tests.
+-   [x] Company.
+-   [x] Region.
+-   [x] Store.
+-   [x] Warehouse.
+-   [x] Terminal.
+-   [x] User scope assignment.
+-   [x] Terminal/store relationship.
+-   [x] Organization APIs.
+-   [x] Authorization integration.
+-   [x] Audit.
+-   [x] Tests.
 
 ------------------------------------------------------------------------
 
 # PHASE 4 --- MASTER DATA
 
--   [ ] Brand.
--   [ ] Category.
--   [ ] UOM.
--   [ ] Product.
--   [ ] Product variant.
--   [ ] Barcode.
--   [ ] Serial number.
--   [ ] Customer group.
--   [ ] Customer.
--   [ ] Customer address.
--   [ ] Master data APIs.
--   [ ] Search/index strategy.
--   [ ] Audit.
--   [ ] Tests.
+-   [x] Brand.
+-   [x] Category.
+-   [x] UOM.
+-   [x] Product.
+-   [x] Product variant.
+-   [x] Barcode.
+-   [x] Serial number (catalog definition & lookup only; physical lifecycle deferred to Inventory).
+-   [x] Customer group (CRM — Phase 2 / Batch 1 / Increment 4).
+-   [x] Customer (CRM — Phase 2 / Batch 1 / Increment 4).
+-   [x] Customer address (CRM — Phase 2 / Batch 1 / Increment 4).
+-   [x] Master data APIs (canonical /api/v1/master and /api/v1/products aliases).
+-   [x] Search/index strategy (trigram / gin indexes on product name & barcode).
+-   [x] Audit (Brand, Category, UOM, Product, Variant, Barcode audit logging).
+-   [x] Tests (unit and PostgreSQL disposable integration tests with forced RLS).
 
 ------------------------------------------------------------------------
 
 # PHASE 5 --- POS SESSION
 
--   [ ] Device identity foundation.
--   [ ] Terminal registration.
--   [ ] Terminal lifecycle.
--   [ ] POS session opening.
--   [ ] Active-session uniqueness.
--   [ ] Cash movement.
--   [ ] Session closing.
--   [ ] Variance workflow hook.
--   [ ] Session audit.
--   [ ] Session events.
--   [ ] Tests.
--   [ ] Concurrency test for terminal session.
+-   [x] Device identity foundation.
+-   [x] Terminal registration.
+-   [x] Terminal lifecycle.
+-   [x] POS session opening.
+-   [x] Active-session uniqueness.
+-   [x] Cash movement.
+-   [x] Session closing.
+-   [x] Variance workflow hook.
+-   [x] Session audit.
+-   [x] Session events.
+-   [x] Tests.
+-   [x] Concurrency test for terminal session.
 
 ------------------------------------------------------------------------
 
@@ -347,20 +347,20 @@ Do not begin business domains until Gate 1 passes.
 
 # PHASE 9 --- PRICING AND PROMOTION
 
--   [ ] Price list.
--   [ ] Price rule.
--   [ ] Price validity.
--   [ ] Promotion master.
--   [ ] Promotion condition.
--   [ ] Promotion reward.
--   [ ] Stackability.
--   [ ] Net-after-promo calculation.
--   [ ] Promotion approval.
--   [ ] Promotion activation.
--   [ ] Promotion versioning.
--   [ ] Deterministic calculation tests.
--   [ ] Historical reproducibility tests.
--   [ ] Audit/events.
+-   [x] Price list (Pricing — Phase 2 / Batch 2 / Increment 6 — Accepted).
+-   [x] Price rule (Pricing — Phase 2 / Batch 2 / Increment 6 — Accepted).
+-   [x] Price validity (Pricing — Phase 2 / Batch 2 / Increment 6 — Accepted).
+-   [x] Promotion master (Promotion — Phase 2 / Batch 2 / Increment 7 — Accepted).
+-   [x] Promotion condition (Promotion — Phase 2 / Batch 2 / Increment 7 — Accepted).
+-   [x] Promotion reward (Promotion — Phase 2 / Batch 2 / Increment 7 — Accepted).
+-   [x] Stackability (Promotion — Phase 2 / Batch 2 / Increment 7 — Accepted).
+-   [x] Net-after-promo calculation (Promotion — Phase 2 / Batch 2 / Increment 7 — Accepted).
+-   [x] Promotion approval (Promotion — Phase 2 / Batch 2 / Increment 7 — Accepted).
+-   [x] Promotion activation (Promotion — Phase 2 / Batch 2 / Increment 7 — Accepted).
+-   [x] Promotion versioning (Promotion — Phase 2 / Batch 2 / Increment 7 — Accepted).
+-   [x] Deterministic calculation tests (Pricing — Phase 2 / Batch 2 / Increment 6 — Accepted; Promotion — Phase 2 / Batch 2 / Increment 7 — Accepted).
+-   [x] Historical reproducibility tests (Pricing — Phase 2 / Batch 2 / Increment 6 — Accepted; Promotion — Phase 2 / Batch 2 / Increment 7 — Accepted).
+-   [x] Audit/events (Pricing — Phase 2 / Batch 2 / Increment 6 — Accepted; Promotion — Phase 2 / Batch 2 / Increment 7 — Accepted).
 
 ------------------------------------------------------------------------
 

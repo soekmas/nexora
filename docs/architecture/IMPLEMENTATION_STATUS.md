@@ -1,6 +1,6 @@
 # Implementation Status
 
-Date: 2026-10-06
+Date: 2026-10-11
 
 ## Architecture
 
@@ -8,7 +8,7 @@ Architecture artifacts through CI/CD are prepared and treated as the current des
 
 ## Coding
 
-Current phase: **Phase 0 — Repository Bootstrap / Phase 1 — Go Backend Foundation**
+Current phase: **Phase 2 — Domain Implementation (Batch 2: Increments 5, 6 & 7 Accepted; Awaiting Increment 8 Inventory Domain Authorization)**
 
 ## Completed repository preparation
 
@@ -31,10 +31,23 @@ Current phase: **Phase 0 — Repository Bootstrap / Phase 1 — Go Backend Found
 - [x] Phase 1 — Remediation Batch 3: Reliability, Tenant Security & Transaction Integrity completed & accepted
 - [x] Phase 1 — Remediation Batch 4: Auth RLS Resolver (WS4-RLS-01), CI Baseline Checksum (CI-BASELINE-01), Lint Cache (CI-LINT-01) completed & accepted
 - [x] Phase 1 — Final Acceptance Gate (Gate 1): ACCEPTED WITH DOCUMENTED LIMITATIONS
+- [x] Phase 2 — Domain Architecture & Implementation Planning completed (`19-phase2-domain-implementation-plan.md`)
+- [x] Phase 2 — Batch 1 Pre-Implementation Review & Decisions Approved (`20-phase2-batch1-pre-implementation-review.md`)
+- [x] Phase 2 — Batch 1 / Increment 1: Identity Core & Credentials accepted with documented limitations (Migration 000006, Argon2id, lockout, SoD, atomic audit/outbox, forced RLS; MFA foundation deferred; Gate 2 / Batch 1 acceptance)
+- [x] Phase 2 — Batch 1 / Increment 2: Organization Hierarchy & Terminal Security accepted with documented limitations (Migration 000008, region RLS, terminal lifecycle DISABLED/RETIRED, device token SHA-256 hash security; POS sessions/cash operations deferred to POS domain; `docs/architecture/23-organization-increment-acceptance-review.md`)
+- [x] Phase 2 — Batch 1 / Increment 3: Master Data & Catalog accepted with documented limitations (Migration 000009, DEC-B1-008 through DEC-B1-013, hybrid company ownership, forced RLS, dual-mount canonical & alias routes; authoritative pricing deferred to Pricing domain, physical serial inventory movements deferred to Inventory domain; `docs/architecture/27-master-data-increment-acceptance-review.md`)
+- [x] Phase 2 — Batch 1 / Increment 4: Customer Relationship Management (`crm`) accepted with documented limitations (Migration 000007, DEC-B1-014 through DEC-B1-018, collision-resistant customer numbering, partial unique index & atomic default address, forced RLS, dual-mount canonical & alias routes; loyalty points deferred to Batch 4, checkout customer linking deferred to Batch 3, customer-group & lifecycle routes canonical-only; `docs/architecture/31-crm-increment-acceptance-review.md`)
+- [x] Phase 2 — Batch 1 Closure Review: CLOSED WITH DOCUMENTED FOLLOW-UPS (`docs/architecture/32-phase2-batch1-closure-review.md`; all four increments formally accepted with documented limitations; administrative status synchronization completed)
+- [x] Phase 2 — Batch 2 Pre-Implementation Review & Decisions Approved (`docs/architecture/33-phase2-batch2-pre-implementation-review.md`)
+- [x] Phase 2 — Batch 2 / Increment 5: POS Session & Cash Management accepted (`db/migrations/000010_pos_hardening.sql`, terminal exclusivity, blind count confidentiality, supervisor variance approval; `docs/architecture/38-pos-stage2-acceptance-consistency-audit.md`)
+- [x] Phase 2 — Batch 2 / Increment 6: Pricing Engine accepted (`db/migrations/000011_pricing_engine.up.sql`, pure rational arithmetic & rounding, 8-tier specificity hierarchy, quantity tiers, price list & rule CRUD, canonical state machine, audit/outbox events, Stage 5 OpenAPI parity; Final Acceptance: ACCEPTED)
+- [x] Phase 2 — Batch 2 / Increment 7: Promotion Engine accepted (`db/migrations/000012_promotion_hardening.sql`, deterministic pure evaluator, `big.Rat` exact arithmetic, `BUY_X_GET_Y` reward with `BonusItem` output, immutable approved promotions, approval SoD, atomic audit/outbox events, forced RLS, canonical routes & backward-compatible aliases, Stage 5 OpenAPI parity & contract tests; Final Acceptance: ACCEPTED)
 
 ## Intentionally not completed yet
 
-- [ ] Phase 2+: Business domains
+- [ ] Phase 2 — Batch 2: Store Operations, Rules & Inventory remaining increment (Increment 8: `inventory`)
+- [ ] Phase 2 — Batch 3: Transaction Execution & Settlement (`sales`, `payment`)
+- [ ] Phase 2 — Batch 4: Enterprise Extensions & Back-Office (`purchasing`, `loyalty`, `workflow`, `finance`/`reporting`)
 
 These are intentionally left for Antigravity execution according to `17-foundation-implementation-plan.md` and `TASKS.md`.
 
@@ -200,6 +213,7 @@ All migrations have been executed and verified in strict sequential order agains
 | `db/migrations/000003_outbox_leases.sql` | `15b6da589a153f64984b08ab393792dffc8b52d9e52d5f034dc0feb8966be279` | Outbox leases (`claimed_by`, `lease_expires_at`, `next_attempt_at`), status check, attempt index. |
 | `db/migrations/000004_audit_hardening.sql` | `1e89aed0c072fd1c6ee6ce9321ed1448df9dd97fd321ff93b39364dd5072176f` | Audit child table RLS, login history trigger, catalog FK, severity check, and canonical actions. |
 | `db/migrations/000005_auth_rls_bootstrap.sql` | `8a54f965d850209d3bde285de68feb27f660633e2360f5fac6bb2fa90e4ab5e0` | Restricted token-hash tenant resolution, forced auth-table RLS policies, and corrected refresh-token tenant-FK trigger arguments. |
+| `db/migrations/000006_identity_permissions.sql` | `a41d19cfcb8960d0267872614e6946985241d83de928ffb6386373de5c43f8d2` | Canonical permission catalog seed for Identity Increment 1 (Option 1 approved). |
 
 ---
 
@@ -340,7 +354,182 @@ All migrations have been executed and verified in strict sequential order agains
   3. *OTLP Protocol Wire Format*: OTLP exporter uses standard OTLP/HTTP JSON (`POST /v1/traces`, port 4318); binary protobuf wire format (`application/x-protobuf`) is omitted to avoid external dependencies.
   4. *Superuser Immutability Boundary (`WS7-07`)*: Immutability triggers protect tables against application role `nexora_app` (`NOBYPASSRLS`); enterprise WORM export deferred to deployment phase.
   5. *Public Audit Inspection Endpoint (`WS7-08`)*: Platform method `FindAuditLogs` is implemented and verified; public HTTP endpoint mounting is deferred to Phase 2 to prevent unapproved OpenAPI v1.0 drift.
-- **Phase 2 Authorization:** Phase 2 remains **UNAUTHORIZED** until explicit user authorization is provided.
+- **Phase 2 Authorization:** Authorized strictly for **Batch 1 / Increment 1 (Identity Core & Credentials)**. All subsequent increments and domains remain unauthorized until separate explicit authorization.
+
+---
+
+## Phase 2 Batch 1 — Increment 1: Identity Core & Credentials
+
+- **Status:** COMPLETED & VERIFIED
+- **Approved Architectural Decisions:**
+  - `DEC-B1-001`: Argon2id password hashing parameters ($m=64\text{ MiB}, t=3, p=4$, salt 16B, key 32B).
+  - `DEC-B1-002`: Migration allocation: `000006_identity_permissions.sql` for permission catalog seeding; `000007_crm_audit_actions.sql` reserved for CRM and deferred.
+  - `DEC-B1-003`: Permission catalog metadata seeded in `identity.permission`; handlers/services for future domains strictly excluded.
+  - `DEC-B1-004`: Server-issued POS terminal tokens architectural model preserved.
+  - `DEC-B1-005`: 5-consecutive-failure, 15-minute account lockout policy.
+- **Migration Details:**
+  - File: `db/migrations/000006_identity_permissions.sql`
+  - SHA-256: `a41d19cfcb8960d0267872614e6946985241d83de928ffb6386373de5c43f8d2`
+  - Advisory lock: `hashtext('nexora.identity.permissions.v1')`
+  - Behavior: Seeds canonical permissions into `identity.permission` using `ON CONFLICT (code) DO NOTHING`.
+  - Migration `000007_crm_audit_actions.sql` was NOT created or executed.
+  - Approved baseline `000001_baseline_hardened.sql` (`e7cefc2dfcdcf2b90a8418dcc2da8a091289ee00a5806c08278bf1516d5fb09f`) and migrations 000002–000005 remain completely unmodified.
+- **Components Implemented (`backend/internal/identity`):**
+  - `hasher.go`: Argon2id password hashing and constant-time verification adhering to DEC-B1-001.
+  - `model.go`: Domain entities (`UserAccount`, `Role`, `Permission`, `UserScope`, `LoginAttempt`, `UserWithDetails`), constants, and lockout predicate (`IsLocked`).
+  - `errors.go`: Sentinel domain errors and `MapToAppError` mapping to canonical HTTP error envelopes.
+  - `store.go`: PostgreSQL persistence layer (`PgxStore`) using `postgres.DBTX` for tenant-scoped user CRUD, optimistic versioning, role assignments, scope bindings, and atomic failure/lockout counters.
+  - `service.go`: Business logic (`DomainService`) enforcing password length policy, Segregation of Duties (`ErrSelfRoleAssignmentDenied`), 5-failure 15-minute lockout policy, atomic append-only audit logging (`USER_CREATED`, `USER_UPDATED`, `USER_LOCKED`, `USER_ROLE_ASSIGNED`, `USER_ROLE_REVOKED`, `USER_SCOPE_CHANGED`, `LOGIN_SUCCESS`, `LOGIN_FAILURE`, `PASSWORD_RESET`), and transactional outbox event emission (`identity.user.created.v1`, `identity.user.locked.v1`, `identity.role.assigned.v1`, `identity.role.revoked.v1`, `identity.scope.assigned.v1`, `identity.scope.revoked.v1`).
+  - `handler.go`: RESTful endpoints mounted on Chi router with canonical JSON error envelopes (`apperr.ErrorResponse`), authentication checks, dual permission validation (`canonical.dot` and `legacy:colon`), and tenant extraction from `X-Tenant-ID` or authenticated principal.
+- **Verification Evidence:**
+  - Uncached full backend race suite passed: `go test -count=1 -race -p 1 ./backend/...` (0 data races, 0 failures).
+  - All identity unit and integration tests passed:
+    - User account lifecycle and Argon2id hash format verification.
+    - Forced RLS multi-tenant isolation under `nexora_app` non-superuser (`NOBYPASSRLS`).
+    - 5-failure 15-minute account lockout: attempts 1–4 increment failure counter; attempt 5 locks account, emits outbox event and audit log; attempt 6 while locked fails closed; attempt after simulated expiry succeeds and resets counter.
+    - Concurrent failed login attempts (10 concurrent goroutines) execute safely without deadlocks or lost updates.
+    - Segregation of Duties: self-assignment of administrative roles rejected with 403 `ErrSelfRoleAssignmentDenied`.
+    - Migration 000006 catalog seed verified.
+  - Static analysis: `golangci-lint run ./...` passed with 0 issues; `go vet ./...` passed with 0 issues; `go build ./backend/...` succeeded.
+- **Excluded Domains Confirmed:**
+  - Master data, product catalog, variants, barcodes remain unimplemented.
+  - CRM customers, groups, addresses remain unimplemented.
+  - POS sessions, cash management, sales orders, payment, loyalty, purchasing, inventory, reporting remain unimplemented.
+  - Migration `000007_crm_audit_actions.sql` has NOT been created.
+
+---
+
+## Phase 2 Batch 1 — Increment 2: Organization Hierarchy & Terminal Security
+
+- **Status:** COMPLETED & VERIFIED
+- **Approved Architectural Decisions:**
+  - `DEC-B1-006` (Option A): Forward migration `000008_organization_hardening.sql` enables RLS on `organization.region` with tenant-isolation policy and expands `organization.terminal` status constraint to include `DISABLED` and `RETIRED`.
+  - `DEC-B1-007` (Option A): Server-issued terminal device tokens store only their SHA-256 hash in `organization.terminal.device_identifier`. Plaintext token (`dev_tok_` + 32-byte hex entropy) is returned strictly once upon registration/rotation.
+- **Migration Details:**
+  - File: `db/migrations/000008_organization_hardening.sql`
+  - SHA-256: `f454c5db4a5e7f383ae21ffac63f575ff3508c334bcb16008b60a5c2dfe83dcb`
+  - Advisory lock: `hashtext('nexora.organization.hardening.v1')`
+  - Behavior:
+    - Enables RLS on `organization.region` with policy `tenant_region_isolation` (`tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid`).
+    - Expands `organization.terminal.terminal_status_check` constraint to `CHECK (status IN ('ACTIVE', 'INACTIVE', 'MAINTENANCE', 'DISABLED', 'RETIRED'))`.
+  - Migration `000007_crm_audit_actions.sql` remains absent / strictly reserved for CRM.
+  - Approved baseline `000001_baseline_hardened.sql` (`e7cefc2dfcdcf2b90a8418dcc2da8a091289ee00a5806c08278bf1516d5fb09f`) and migrations 000002–000006 remain completely unmodified.
+- **Components Implemented (`backend/internal/organization`):**
+  - `token.go`: Cryptographically secure device token generator (`dev_tok_` prefix + 32 random bytes from `crypto/rand`), SHA-256 hex hashing, and constant-time token verification via `subtle.ConstantTimeCompare`.
+  - `model.go`: Domain entities (`Company`, `Region`, `Store`, `Warehouse`, `Terminal`), status constants, request/response DTOs, and event/audit definitions.
+  - `errors.go`: Sentinel domain errors and `MapToAppError` mapping to canonical HTTP error envelopes (`apperr.AppError`).
+  - `store.go`: PostgreSQL persistence layer (`PgxStore`) using `postgres.DBTX` for tenant-scoped CRUD, optimistic locking on `version`, unique constraint handling, parent-child referential validation, device token hash lookup and updates, and cross-domain scope entity validation (`ValidateScopeEntity`).
+  - `service.go`: Business domain service (`DomainService`) orchestrating entity lifecycle, device token issuance/rotation/revocation, parent-child referential integrity checks (store $\rightarrow$ region $\rightarrow$ company; warehouse $\rightarrow$ store/company; terminal $\rightarrow$ store/company), atomic append-only audit logging (`COMPANY_CREATED`, `COMPANY_UPDATED`, `REGION_CREATED`, `REGION_UPDATED`, `STORE_CREATED`, `STORE_UPDATED`, `WAREHOUSE_CREATED`, `WAREHOUSE_UPDATED`, `TERMINAL_REGISTERED`, `TERMINAL_UPDATED`, `TERMINAL_REVOKED`), and transactional outbox event emission (`organization.company.created.v1`, `organization.region.created.v1`, `organization.store.created.v1`, `organization.warehouse.created.v1`, `organization.terminal.registered.v1`, `organization.terminal.updated.v1`, `organization.terminal.revoked.v1`).
+  - `handler.go`: RESTful endpoints mounted on Chi router under `/api/v1/organization/` with canonical JSON error envelopes (`apperr.ErrorResponse`), authentication checks (`auth.Principal`), dual permission checks (`company.create`, `region.create`, `store.create`, `warehouse.create`, `terminal.register`, etc.), tenant context injection, and single-exposure token return.
+  - Route mounting: Wired into `backend/api.go` via `/api/v1/organization`.
+- **Verification Evidence:**
+  - Uncached full backend race suite passed: `go test -count=1 -race -p 1 ./backend/...` across all 15 packages (0 data races, 0 failures).
+  - All organization unit and integration tests passed:
+    - Token generation entropy, SHA-256 hashing, and constant-time comparison tests.
+    - Full entity lifecycle CRUD for Company, Region, Store, Warehouse, and Terminal.
+    - Tenant RLS isolation verified on `organization.region` and all organization entities under `nexora_app` non-superuser role (`NOBYPASSRLS`).
+    - Device token security: plaintext returned only once; only SHA-256 hash stored in PostgreSQL; presented token verified via constant-time comparison.
+    - Terminal rotation & revocation: old token superseded/revoked immediately; status updated to `DISABLED` on revocation.
+    - Optimistic concurrency conflicts: conflicting concurrent updates rejected with 409 `ErrOptimisticLockConflict`.
+    - Parent-child referential validation: store creation with mismatched company/region rejected with 400 `ErrParentNotFound`.
+    - User scope assignment integration: `ValidateScopeEntity` verifies entity active status for Identity scope bindings.
+    - Atomic audit log and transactional outbox event emission verified in PostgreSQL.
+  - Static analysis: `golangci-lint run ./...` passed with 0 issues; `go vet ./...` passed with 0 issues; `go build ./backend/...` succeeded.
+- **Excluded Domains Confirmed at Increment 2 Scope:**
+  - Master data, product catalog, variants, barcodes remained unimplemented at Increment 2.
+  - CRM customers, groups, addresses remained unimplemented at Increment 2.
+  - POS sessions, cash management, sales orders, payment, loyalty, purchasing, inventory, reporting remained unimplemented.
+  - Migration `000007_crm_audit_actions.sql` remained uncreated at Increment 2.
+
+---
+
+## Phase 2 Batch 1 — Closure Summary
+
+- **Status:** CLOSED WITH DOCUMENTED FOLLOW-UPS
+- **Closure Review Artifact:** `docs/architecture/32-phase2-batch1-closure-review.md`
+- **Increments Summary & Acceptance Verdicts:**
+  - **Increment 1 (Identity Core & Credentials):** `ACCEPTED WITH DOCUMENTED LIMITATIONS` (MFA foundation deferred).
+  - **Increment 2 (Organization Hierarchy & Terminal Security):** `ACCEPTED WITH DOCUMENTED LIMITATIONS` (POS sessions and cash operations deferred to POS domain; `docs/architecture/23-organization-increment-acceptance-review.md`).
+  - **Increment 3 (Master Data & Catalog):** `ACCEPTED WITH DOCUMENTED LIMITATIONS` (Authoritative pricing calculations deferred to Pricing domain, physical serial inventory movements deferred to Inventory domain; `docs/architecture/27-master-data-increment-acceptance-review.md`).
+  - **Increment 4 (Customer Relationship Management):** `ACCEPTED WITH DOCUMENTED LIMITATIONS` (Loyalty points deferred to Loyalty domain, sales checkout customer linking deferred to Sales domain, customer group & lifecycle routes canonical-only; `docs/architecture/31-crm-increment-acceptance-review.md`).
+- **Follow-Up Status Synchronization:**
+  - The Batch 1 closure review identified a status synchronization requirement for `docs/architecture/IMPLEMENTATION_STATUS.md` to reflect that all four increments have completed independent acceptance reviews and are formally accepted with documented limitations.
+  - Completed with this update. Batch 2 (Store Operations, Rules & Inventory) is unblocked and awaits pre-implementation review authorization.
+
+---
+
+## Phase 2 Batch 2 — Increment 6: Pricing Engine Summary
+
+- **Status:** ACCEPTED (Completed & Verified)
+- **Approved Architectural Decisions:**
+  - `DEC-B2-003`: Canonical Pricing administration endpoints `/api/v1/pricing/price-lists` and `/api/v1/pricing/rules` established with OpenAPI v1.0.0 parity.
+  - `DEC-B2-004`: Seed canonical audit actions (`PRICE_CREATED`, `PRICE_UPDATED`, `PRICE_SUBMITTED`, `PRICE_APPROVED`, `PRICE_REJECTED`, `PRICE_ACTIVATED`, `PRICE_DEACTIVATED`, `PRICE_EXPIRED`) and permissions (`price.read`, `price_list.create`, `price_list.update`, `price_rule.read`, `price_rule.create`, `price_rule.update`, `price_rule.submit`, `price_rule.approve`, `price_rule.activate`, `price_rule.deactivate`).
+  - `DEC-B2-009`: Sequential increment plan (Increment 5 POS $\rightarrow$ Increment 6 Pricing $\rightarrow$ Increment 7 Promotion $\rightarrow$ Increment 8 Inventory).
+  - Specificity hierarchy (Tiers 1–8), exact rational arithmetic (`*big.Rat`), half-up 4-decimal rounding, zero precision loss.
+  - Strict channel matching (exact `channel = $3`, no silent fallback to `ALL`; missing default returns `PRICE_LIST_NOT_FOUND` 422).
+  - `MissingPriceError` all-or-nothing rejection with `details.unpriced_items` envelope.
+- **Migration Details:**
+  - File: `db/migrations/000011_pricing_engine.up.sql`
+  - SHA-256: `bb29308c0162d21355470d81a8860f23c8dfc4aef0278515a8e99fb436ab6bc7`
+- **Components Implemented (`backend/internal/pricing`):**
+  - `model.go`: Domain models (`PriceList`, `PriceRule`, `CartItem`, `PriceQuoteRequest`, `PriceQuote`, `PriceQuoteItem`, DTOs), validation rules, exact rational setters/getters.
+  - `calculator.go`: Pure deterministic price resolution, 8-tier specificity hierarchy, quantity tier selection, exact rational multiplication (`MultiplyExactRat`), line item rounding, subtotal rational accumulation.
+  - `store.go`: PostgreSQL persistence layer (`PgxStore`) using `postgres.DBTX` for tenant-scoped CRUD, optimistic locking on `version`, unique constraint handling, direct numeric string parsing to `*big.Rat`.
+  - `service.go`: Business domain service (`DomainService`) orchestrating quote calculation, price list CRUD, price rule draft CRUD, lifecycle state transitions (`Submit`, `Approve`, `Reject`, `Activate`, `Deactivate`), atomic audit logging, and transactional outbox event emission (`pricing.price_rule.<action>.v1`).
+  - `handler.go`: RESTful endpoints mounted on Chi router under `/api/v1/pricing/` and alias `/pricing/` with canonical error handling (`apperr.AppError`), authentication/permission checks, and JSON response formatting.
+- **Stages Executed & Verified:**
+  - **Stage 3:** Design Review & Decisions Locked.
+  - **Stage 4:** Pricing Backend Implementation (`backend/internal/pricing/`, route registration in `backend/api.go`).
+  - **Stage 4.1:** Targeted Consistency Audit & Correction (Strict default list channel matching, approve/reject permission alignment, outbox event constants `pricing.price_rule.<action>.v1`, state transition restriction `APPROVED -> ACTIVE`).
+  - **Stage 4.2:** Decimal Arithmetic Verification & Targeted Correction (Direct numeric text to `*big.Rat`, rational multiplication `MultiplyExactRat`, rational subtotal accumulation, 4-decimal rounding).
+  - **Stage 5:** OpenAPI Parity (`contracts/openapi/openapi-v1.0.0.yaml` synchronized with quote, price lists, rules, and lifecycle transitions; Redocly lint passed with 0 errors).
+  - **Final Acceptance:** `ACCEPTED` (All migration integrity, database decimal round-trip, pricing service, POS regression, and full backend suites passed).
+- **Next Milestone:** Increment 6 officially closed.
+
+---
+
+## Phase 2 Batch 2 — Increment 7: Promotion Engine Summary
+
+- **Status:** ACCEPTED (Completed, Verified & Officially Closed)
+- **Approved Architectural Decisions:**
+  - `DEC-B2-005`: Canonical Promotion administration endpoints `/api/v1/promotions` established with OpenAPI v1.0.0 parity.
+  - `DEC-B2-009`: Sequential increment plan (Increment 5 POS $\rightarrow$ Increment 6 Pricing $\rightarrow$ Increment 7 Promotion $\rightarrow$ Increment 8 Inventory).
+  - Canonical lifecycle statuses: `DRAFT`, `PENDING_APPROVAL`, `APPROVED`, `SCHEDULED`, `ACTIVE`, `PAUSED`, `EXPIRED`, `REJECTED`, `CANCELLED`.
+  - Immutability of approved promotions: in-place edits allowed only in `DRAFT` status; approved/active promotions require new draft version creation (`/promotions/{id}/draft-version`).
+  - Approval Segregation of Duties (SoD): promotion creator cannot approve their own promotion (`ErrSoDViolation`).
+  - Pure read-only cart evaluation: `/promotions/evaluate` executes pure evaluation without mutating or reserving `usage_count`.
+  - Exact currency arithmetic via `math/big.Rat`: zero precision loss, non-negative net prices, and discount caps preventing total discount from exceeding eligible subtotal.
+  - Deterministic tie-breaking (`Priority DESC` $\rightarrow$ `EffectiveFrom ASC` $\rightarrow$ `CreatedAt ASC` $\rightarrow$ `ID ASC`) and stacking policies (`EXCLUSIVE`, `BEST_ONLY`, `STACKABLE`).
+  - `BUY_X_GET_Y` reward support: floor division calculation, `max_applications` cap, and detailed `BonusItem` outputs (`product_id`, `variant_id`, `item_name`, `free_quantity`, `discount_amount`, `promotion_id`, `promotion_code`).
+  - Canonical fields with documented backward compatibility: `effective_from`/`effective_to` canonical (`valid_from`/`valid_to` aliases); `reason` canonical (`comment` alias); `/pause` canonical (`/deactivate` alias).
+- **Migration Details:**
+  - File: `db/migrations/000012_promotion_hardening.sql`
+  - SHA-256: `e4cf0d75d9524291958a4bc95422fd7aa3b063980ffcaf7347b5900c8945d122`
+  - Advisory lock: `hashtext('nexora.promotion.hardening.v1')`
+  - Behavior:
+    - Status check constraint with canonical statuses.
+    - Stacking check constraint (`STACKABLE`, `EXCLUSIVE`, `BEST_ONLY`).
+    - Partial evaluation index: `idx_promotions_active_eval` on `(tenant_id, status, channel, priority DESC, effective_from, id) WHERE status = 'ACTIVE'`.
+    - Cross-tenant trigger: `trg_prevent_cross_tenant_promotion_version`.
+    - Seeded canonical audit actions (`PROMOTION_CREATED`, `PROMOTION_UPDATED`, `PROMOTION_SUBMITTED`, `PROMOTION_APPROVED`, `PROMOTION_REJECTED`, `PROMOTION_ACTIVATED`, `PROMOTION_PAUSED`, `PROMOTION_VERSION_CREATED`).
+    - Seeded canonical permissions (`promotion.create`, `promotion.read`, `promotion.update`, `promotion.submit`, `promotion.approve`, `promotion.reject`, `promotion.activate`, `promotion.pause`, `promotion.evaluate`).
+- **Components Implemented (`backend/internal/promotion`):**
+  - `model.go`: Domain models (`Promotion`, `PromotionCondition`, `PromotionReward`, `PromotionVersion`, DTOs), validation rules, versioning definitions.
+  - `evaluator.go`: Deterministic pure promotion evaluator, 4 condition evaluators (`MIN_ORDER_AMOUNT`, `MIN_ITEM_QTY`, `PRODUCT_IN_LIST`, `CATEGORY_IN_LIST`), 3 reward evaluators (`PERCENTAGE_DISCOUNT`, `FIXED_AMOUNT_DISCOUNT`, `BUY_X_GET_Y`), exact rational arithmetic via `math/big.Rat`, discount caps, non-negative net totals, tie-breaking, stacking resolution, and `BonusItem` output generation.
+  - `pgx_store.go`: PostgreSQL persistence layer (`PgxStore`) using `postgres.DBTX` for tenant-scoped queries, RLS context injection, optimistic locking on `version`, unique code constraint handling, draft version branching, and active promotion query filtering.
+  - `service.go`: Business domain service (`DomainService`) orchestrating promotion lifecycle (`Create`, `UpdateDraft`, `CreateDraftVersion`, `Submit`, `Approve` with SoD, `Reject`, `Activate`, `Pause`), pure cart evaluation, atomic append-only audit logging (`PROMOTION_*`), and transactional outbox event emission (`promotion.<action>.v1`).
+  - `handler.go`: RESTful endpoints mounted on Chi router under `/api/v1/promotions` and alias `/promotions` with canonical error handling (`apperr.AppError`), authentication/permission checks, idempotency middleware on mutating commands, and JSON response formatting.
+  - `promotion_contract_test.go`: Automated contract tests verifying OpenAPI specification parity against implemented routes, methods, schemas, reward types, and error envelopes.
+- **Stages Executed & Verified:**
+  - **Stage 1:** Promotion Migration (`000012_promotion_hardening.sql`, constraints, indexes, seeds, triggers).
+  - **Stage 2:** Promotion Domain Engine (`evaluator.go`, exact rational arithmetic, condition/reward evaluators, `BUY_X_GET_Y`, stacking).
+  - **Stage 3:** Repository & Application Service (`pgx_store.go`, `service.go`, SoD approval guard, immutability, optimistic locking, atomic audit/outbox).
+  - **Stage 4:** HTTP Handlers & Transport Integration (`handler.go`, route mounting, idempotency, canonical error mapping, compatibility routing).
+  - **Stage 5:** OpenAPI Parity & Contract Hardening (`contracts/openapi/openapi-v1.0.0.yaml` synchronized with all 12 endpoints and schemas; Redocly lint passed with 0 errors; contract tests passed).
+  - **Final Acceptance & Closure Review:** `ACCEPTED` (All migration integrity, evaluator test suite, store integration, service lifecycle, handler transport, contract parity, regression suites, and static analysis passed with zero blockers).
+- **Non-Blocking Notes:**
+  - Minor formatting/indentation in test files recorded per documentation convention with zero functional impact.
+- **Next Milestone:** Awaiting owner authorization to initiate Increment 8 (Inventory Domain).
 
 
 

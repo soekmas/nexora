@@ -11,11 +11,21 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
+	"example.com/nexora/backend/internal/crm"
+	"example.com/nexora/backend/internal/identity"
+	"example.com/nexora/backend/internal/master"
+	"example.com/nexora/backend/internal/organization"
+	"example.com/nexora/backend/internal/platform/audit"
 	"example.com/nexora/backend/internal/platform/config"
+	"example.com/nexora/backend/internal/platform/idempotency"
 	"example.com/nexora/backend/internal/platform/lifecycle"
 	"example.com/nexora/backend/internal/platform/logger"
+	"example.com/nexora/backend/internal/platform/outbox"
 	"example.com/nexora/backend/internal/platform/postgres"
 	transport "example.com/nexora/backend/internal/platform/transport/http"
+	"example.com/nexora/backend/internal/pos"
+	"example.com/nexora/backend/internal/pricing"
+	"example.com/nexora/backend/internal/promotion"
 )
 
 // APIOptions allows injecting pre-configured dependencies or overrides for testing.
@@ -126,6 +136,65 @@ func RunAPIWithOptions(ctx context.Context, opts APIOptions) error {
 
 	// 3. HTTP Server construction
 	srv := transport.NewServer(cfg, log, dbPool, rdb)
+	if dbPool != nil {
+		tm := postgres.NewTxManager(dbPool, log)
+		idStore := identity.NewPgxStore(dbPool)
+		idAudit := audit.NewPgxStore(dbPool, tm, log)
+		idOutbox := outbox.NewPgxWriter(log)
+		idHasher := identity.NewArgon2idHasher()
+		idService := identity.NewService(idStore, idHasher, tm, idAudit, idOutbox, log)
+		idHandler := identity.NewHandler(idService, log)
+		srv.Router().Mount("/api/v1/identity", idHandler.Routes())
+
+		orgStore := organization.NewPgxStore(dbPool)
+		orgAudit := audit.NewPgxStore(dbPool, tm, log)
+		orgOutbox := outbox.NewPgxWriter(log)
+		orgService := organization.NewService(orgStore, tm, orgAudit, orgOutbox, log)
+		orgHandler := organization.NewHandler(orgService, log)
+		srv.Router().Mount("/api/v1/organization", orgHandler.Routes())
+
+		masterStore := master.NewPgxStore(dbPool)
+		masterAudit := audit.NewPgxStore(dbPool, tm, log)
+		masterOutbox := outbox.NewPgxWriter(log)
+		masterService := master.NewService(masterStore, tm, masterAudit, masterOutbox, log)
+		masterHandler := master.NewHandler(masterService, log)
+		srv.Router().Mount("/api/v1/master", masterHandler.Routes())
+		srv.Router().Mount("/api/v1/products", masterHandler.ProductAliasRoutes())
+
+		crmStore := crm.NewPgxStore(dbPool)
+		crmAudit := audit.NewPgxStore(dbPool, tm, log)
+		crmOutbox := outbox.NewPgxWriter(log)
+		crmService := crm.NewService(crmStore, tm, crmAudit, crmOutbox, log)
+		crmHandler := crm.NewHandler(crmService, log)
+		srv.Router().Mount("/api/v1/crm", crmHandler.Routes())
+		srv.Router().Mount("/api/v1/customers", crmHandler.CustomerAliasRoutes())
+
+		posStore := pos.NewPgxStore(dbPool)
+		posAudit := audit.NewPgxStore(dbPool, tm, log)
+		posOutbox := outbox.NewPgxWriter(log)
+		posIdem := idempotency.NewPgxStore(dbPool, log)
+		posService := pos.NewService(posStore, tm, posAudit, posOutbox, log)
+		posHandler := pos.NewHandler(posService, posIdem, log)
+		srv.Router().Mount("/api/v1/pos", posHandler.Routes())
+		srv.Router().Mount("/pos", posHandler.CompatibilityRoutes())
+
+		pricingStore := pricing.NewPgxStore(dbPool)
+		pricingAudit := audit.NewPgxStore(dbPool, tm, log)
+		pricingOutbox := outbox.NewPgxWriter(log)
+		pricingService := pricing.NewService(pricingStore, tm, pricingAudit, pricingOutbox, log)
+		pricingHandler := pricing.NewHandler(pricingService, log)
+		srv.Router().Mount("/api/v1/pricing", pricingHandler.Routes())
+		srv.Router().Mount("/pricing", pricingHandler.CompatibilityRoutes())
+
+		promoStore := promotion.NewPgxStore(dbPool)
+		promoAudit := audit.NewPgxStore(dbPool, tm, log)
+		promoOutbox := outbox.NewPgxWriter(log)
+		promoIdem := idempotency.NewPgxStore(dbPool, log)
+		promoService := promotion.NewService(promoStore, tm, promoAudit, promoOutbox, log)
+		promoHandler := promotion.NewHandler(promoService, promoIdem, log)
+		srv.Router().Mount("/api/v1/promotions", promoHandler.Routes())
+		srv.Router().Mount("/promotions", promoHandler.CompatibilityRoutes())
+	}
 	lm.Register("http_server", func(cleanupCtx context.Context) error {
 		log.Info("Shutting down HTTP server")
 		return srv.Shutdown(cleanupCtx)

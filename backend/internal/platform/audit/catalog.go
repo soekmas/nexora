@@ -85,6 +85,8 @@ var catalogRegistry = map[string]ActionDef{
 	"CATEGORY_UPDATED":        {Code: "CATEGORY_UPDATED", Module: "MASTER", Description: "Category updated", Severity: SeverityNotice, RequiresReason: false},
 	"UOM_CREATED":             {Code: "UOM_CREATED", Module: "MASTER", Description: "Unit of measure created", Severity: SeverityNotice, RequiresReason: false},
 	"UOM_UPDATED":             {Code: "UOM_UPDATED", Module: "MASTER", Description: "Unit of measure updated", Severity: SeverityNotice, RequiresReason: false},
+	"BRAND_CREATED":           {Code: "BRAND_CREATED", Module: "MASTER", Description: "Brand created", Severity: SeverityNotice, RequiresReason: false},
+	"BRAND_UPDATED":           {Code: "BRAND_UPDATED", Module: "MASTER", Description: "Brand updated", Severity: SeverityNotice, RequiresReason: false},
 
 	// 14. Customer / CRM
 	"CUSTOMER_CREATED":         {Code: "CUSTOMER_CREATED", Module: "CRM", Description: "Customer created", Severity: SeverityNotice, RequiresReason: false},
@@ -94,6 +96,8 @@ var catalogRegistry = map[string]ActionDef{
 	"CUSTOMER_ADDRESS_UPDATED": {Code: "CUSTOMER_ADDRESS_UPDATED", Module: "CRM", Description: "Customer address updated", Severity: SeverityNotice, RequiresReason: false},
 	"CUSTOMER_ADDRESS_DELETED": {Code: "CUSTOMER_ADDRESS_DELETED", Module: "CRM", Description: "Customer address deleted", Severity: SeverityHigh, RequiresReason: false},
 	"CUSTOMER_GROUP_CHANGED":   {Code: "CUSTOMER_GROUP_CHANGED", Module: "CRM", Description: "Customer group changed", Severity: SeverityNotice, RequiresReason: false},
+	"CUSTOMER_GROUP_CREATED":   {Code: "CUSTOMER_GROUP_CREATED", Module: "CRM", Description: "Customer group created", Severity: SeverityNotice, RequiresReason: false},
+	"CUSTOMER_GROUP_UPDATED":   {Code: "CUSTOMER_GROUP_UPDATED", Module: "CRM", Description: "Customer group updated", Severity: SeverityNotice, RequiresReason: false},
 
 	// 15. Pricing
 	"PRICE_CREATED":     {Code: "PRICE_CREATED", Module: "PRICING", Description: "Price created", Severity: SeverityNotice, RequiresReason: false},

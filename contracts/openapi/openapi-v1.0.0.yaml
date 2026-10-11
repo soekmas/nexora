@@ -15,7 +15,9 @@ tags:
 - name: Master Data
 - name: CRM
 - name: Pricing
+  description: Deterministic pricing engine, price lists, and hierarchical price rule catalog
 - name: Promotion
+  description: Deterministic promotion engine, condition and reward evaluators, stacking policies, and lifecycle management
 - name: POS
 - name: Sales
 - name: Payment
@@ -1127,6 +1129,7 @@ paths:
       tags:
       - Pricing
       summary: Calculate price quote
+      description: Deterministic pricing engine calculating item unit prices, line discounts, subtotal, and grand total for a cart. Evaluates 8-tier specificity hierarchy, quantity tiers, and customer group or store pricing. Requires price.read permission.
       operationId: postPricingQuote
       responses:
         '200':
@@ -1159,11 +1162,598 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PriceQuoteRequest'
+  /pricing/price-lists:
+    get:
+      tags:
+      - Pricing
+      summary: List price lists
+      description: Lists tenant price lists with optional filtering by currency, channel, status, and pagination. Requires price.read permission.
+      operationId: getPricingPriceLists
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceListList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: currency
+        in: query
+        description: Filter by 3-character ISO currency code
+        schema:
+          type: string
+      - name: channel
+        in: query
+        description: Filter by sales channel (e.g. POS, ECOMMERCE, ALL)
+        schema:
+          type: string
+      - name: status
+        in: query
+        description: Filter by price list status
+        schema:
+          type: string
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - ARCHIVED
+      - name: page
+        in: query
+        description: Page number (1-based)
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        description: Number of records per page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+    post:
+      tags:
+      - Pricing
+      summary: Create price list
+      description: Creates a new tenant-isolated price list. Default price list must be tenant-wide (company_id must be null). Emits PRICE_CREATED audit. Requires price_list.create permission.
+      operationId: postPricingPriceLists
+      responses:
+        '201':
+          description: Price list created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePriceListRequest'
+  /pricing/price-lists/{id}:
+    get:
+      tags:
+      - Pricing
+      summary: Get price list by ID
+      description: Retrieves a specific price list by its UUID. Requires price.read permission.
+      operationId: getPricingPriceListsId
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        description: Price list unique identifier
+        schema:
+          type: string
+          format: uuid
+    put:
+      tags:
+      - Pricing
+      summary: Update price list
+      description: Updates price list attributes with optimistic locking. Emits PRICE_UPDATED audit. Requires price_list.update permission.
+      operationId: putPricingPriceListsId
+      responses:
+        '200':
+          description: Price list updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        description: Price list unique identifier
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePriceListRequest'
+  /pricing/rules:
+    get:
+      tags:
+      - Pricing
+      summary: List price rules
+      description: Lists price rules with optional filters for catalog scope, hierarchy criteria, status, and pagination. Requires price_rule.read permission.
+      operationId: getPricingRules
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceRuleList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: price_list_id
+        in: query
+        description: Filter by price list UUID
+        schema:
+          type: string
+          format: uuid
+      - name: product_id
+        in: query
+        description: Filter by product UUID
+        schema:
+          type: string
+          format: uuid
+      - name: variant_id
+        in: query
+        description: Filter by variant UUID
+        schema:
+          type: string
+          format: uuid
+      - name: store_id
+        in: query
+        description: Filter by store UUID
+        schema:
+          type: string
+          format: uuid
+      - name: customer_group_id
+        in: query
+        description: Filter by customer group UUID
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        description: Filter by rule lifecycle status
+        schema:
+          type: string
+          enum:
+          - DRAFT
+          - APPROVED
+          - ACTIVE
+          - INACTIVE
+          - EXPIRED
+      - name: page
+        in: query
+        description: Page number (1-based)
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        description: Number of records per page
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+    post:
+      tags:
+      - Pricing
+      summary: Create price rule
+      description: Creates a new price rule in DRAFT status. Emits PRICE_CREATED audit and transactional outbox event. Requires price_rule.create permission.
+      operationId: postPricingRules
+      responses:
+        '201':
+          description: Price rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePriceRuleRequest'
+  /pricing/rules/{id}:
+    get:
+      tags:
+      - Pricing
+      summary: Get price rule by ID
+      description: Retrieves a specific price rule by its UUID. Requires price_rule.read permission.
+      operationId: getPricingRulesId
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        description: Price rule unique identifier
+        schema:
+          type: string
+          format: uuid
+    put:
+      tags:
+      - Pricing
+      summary: Update price rule
+      description: Updates price rule attributes with optimistic locking. Rule must be in DRAFT status and change requires reason. Emits PRICE_UPDATED audit. Requires price_rule.update permission.
+      operationId: putPricingRulesId
+      responses:
+        '200':
+          description: Price rule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        description: Price rule unique identifier
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePriceRuleRequest'
+  /pricing/rules/{id}/submit:
+    post:
+      tags:
+      - Pricing
+      summary: Submit price rule for approval
+      description: Submits a DRAFT price rule for review. Rule remains in DRAFT. Emits PRICE_SUBMITTED audit. Requires price_rule.submit permission.
+      operationId: postPricingRulesIdSubmit
+      responses:
+        '200':
+          description: Price rule submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        description: Price rule unique identifier
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleTransitionRequest'
+  /pricing/rules/{id}/approve:
+    post:
+      tags:
+      - Pricing
+      summary: Approve price rule
+      description: Approves a DRAFT price rule, transitioning status to APPROVED. Emits PRICE_APPROVED audit and outbox event. Requires price_rule.approve permission.
+      operationId: postPricingRulesIdApprove
+      responses:
+        '200':
+          description: Price rule approved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        description: Price rule unique identifier
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleTransitionRequest'
+  /pricing/rules/{id}/reject:
+    post:
+      tags:
+      - Pricing
+      summary: Reject price rule
+      description: Rejects a submitted price rule. Rule remains in DRAFT. Requires rejection reason. Emits PRICE_REJECTED audit. Requires price_rule.approve permission.
+      operationId: postPricingRulesIdReject
+      responses:
+        '200':
+          description: Price rule rejected successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        description: Price rule unique identifier
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleTransitionRequest'
+  /pricing/rules/{id}/activate:
+    post:
+      tags:
+      - Pricing
+      summary: Activate price rule
+      description: Transitions an APPROVED price rule to ACTIVE. Emits PRICE_ACTIVATED audit and outbox event. Requires price_rule.activate permission.
+      operationId: postPricingRulesIdActivate
+      responses:
+        '200':
+          description: Price rule activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        description: Price rule unique identifier
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleTransitionRequest'
+  /pricing/rules/{id}/deactivate:
+    post:
+      tags:
+      - Pricing
+      summary: Deactivate price rule
+      description: Transitions an ACTIVE price rule to INACTIVE. Emits PRICE_DEACTIVATED audit and outbox event. Requires price_rule.deactivate permission.
+      operationId: postPricingRulesIdDeactivate
+      responses:
+        '200':
+          description: Price rule deactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        description: Price rule unique identifier
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleTransitionRequest'
   /promotions:
     get:
       tags:
       - Promotion
       summary: List promotions
+      description: Query promotions with pagination and filtering by channel, status, and search query. Requires promotion.read permission.
       operationId: getPromotions
       responses:
         '200':
@@ -1202,14 +1792,37 @@ paths:
           minimum: 1
           maximum: 200
           default: 50
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - DRAFT
+          - PENDING_APPROVAL
+          - APPROVED
+          - SCHEDULED
+          - ACTIVE
+          - PAUSED
+          - EXPIRED
+          - REJECTED
+          - CANCELLED
+      - name: channel
+        in: query
+        schema:
+          type: string
+      - name: search
+        in: query
+        schema:
+          type: string
     post:
       tags:
       - Promotion
       summary: Create promotion
+      description: Creates a new promotion aggregate in DRAFT status. Requires promotion.create permission.
       operationId: postPromotions
       responses:
-        '200':
-          description: Successful response
+        '201':
+          description: Promotion created successfully
           content:
             application/json:
               schema:
@@ -1243,6 +1856,7 @@ paths:
       tags:
       - Promotion
       summary: Get promotion
+      description: Retrieves aggregate promotion details, conditions, and rewards by promotion ID. Requires promotion.read permission.
       operationId: getPromotionsId
       responses:
         '200':
@@ -1273,28 +1887,147 @@ paths:
         required: true
         schema:
           type: string
-      - name: page
-        in: query
+          format: uuid
+    put:
+      tags:
+      - Promotion
+      summary: Update draft promotion
+      description: Modifies an existing promotion in DRAFT status in-place. If the promotion has already been approved, changes must be made via /promotions/{id}/draft-version. Requires promotion.update permission.
+      operationId: putPromotionsId
+      responses:
+        '200':
+          description: Promotion updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Promotion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
         schema:
-          type: integer
-          minimum: 1
-          default: 1
-      - name: page_size
-        in: query
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotionUpdateRequest'
+  /promotions/{id}/draft-version:
+    post:
+      tags:
+      - Promotion
+      summary: Create new draft version
+      description: Creates a new DRAFT version from an approved or active promotion, archiving the previous version into promotion_version snapshot. Requires promotion.update permission.
+      operationId: postPromotionsIdDraftVersion
+      responses:
+        '201':
+          description: Draft version created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Promotion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
         schema:
-          type: integer
-          minimum: 1
-          maximum: 200
-          default: 50
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotionCreateRequest'
+  /promotions/{id}/submit:
+    post:
+      tags:
+      - Promotion
+      summary: Submit promotion for approval
+      description: Transitions promotion lifecycle from DRAFT to PENDING_APPROVAL. Concurrency-protected via version check. Requires promotion.submit permission.
+      operationId: postPromotionsIdSubmit
+      responses:
+        '200':
+          description: Promotion submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Promotion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotionTransitionRequest'
   /promotions/{id}/approve:
     post:
       tags:
       - Promotion
       summary: Approve promotion
+      description: Approves a promotion in PENDING_APPROVAL status. Transitions to ACTIVE if effective window is current, or SCHEDULED if effective_from is in the future. Enforces strict Segregation of Duties (SoD) where creator cannot approve their own promotion. Requires promotion.approve permission.
       operationId: postPromotionsIdApprove
       responses:
         '200':
-          description: Successful response
+          description: Promotion approved successfully
           content:
             application/json:
               schema:
@@ -1322,21 +2055,67 @@ paths:
         required: true
         schema:
           type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApprovalRequest'
+              $ref: '#/components/schemas/PromotionTransitionRequest'
+  /promotions/{id}/reject:
+    post:
+      tags:
+      - Promotion
+      summary: Reject promotion
+      description: Rejects a promotion in PENDING_APPROVAL status, transitioning it to REJECTED. Requires promotion.approve permission.
+      operationId: postPromotionsIdReject
+      responses:
+        '200':
+          description: Promotion rejected successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Promotion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotionTransitionRequest'
   /promotions/{id}/activate:
     post:
       tags:
       - Promotion
       summary: Activate promotion
+      description: Activates a SCHEDULED, APPROVED, or PAUSED promotion to ACTIVE status. Requires promotion.activate permission.
       operationId: postPromotionsIdActivate
       responses:
         '200':
-          description: Successful response
+          description: Promotion activated successfully
           content:
             application/json:
               schema:
@@ -1364,21 +2143,67 @@ paths:
         required: true
         schema:
           type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmptyRequest'
+              $ref: '#/components/schemas/PromotionTransitionRequest'
+  /promotions/{id}/pause:
+    post:
+      tags:
+      - Promotion
+      summary: Pause promotion
+      description: Pauses an ACTIVE promotion, transitioning it to PAUSED status. Requires promotion.pause permission.
+      operationId: postPromotionsIdPause
+      responses:
+        '200':
+          description: Promotion paused successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Promotion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotionTransitionRequest'
   /promotions/{id}/deactivate:
     post:
       tags:
       - Promotion
-      summary: Deactivate promotion
+      summary: Deactivate promotion (compatibility alias)
+      description: Backward-compatible alias for POST /promotions/{id}/pause. Transitions an ACTIVE promotion to PAUSED. Requires promotion.pause permission.
       operationId: postPromotionsIdDeactivate
       responses:
         '200':
-          description: Successful response
+          description: Promotion deactivated successfully
           content:
             application/json:
               schema:
@@ -1406,21 +2231,23 @@ paths:
         required: true
         schema:
           type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReasonRequest'
+              $ref: '#/components/schemas/PromotionTransitionRequest'
   /promotions/evaluate:
     post:
       tags:
       - Promotion
       summary: Evaluate promotions for cart
+      description: Pure read-only deterministic promotion calculation for cart items. Evaluates eligible promotions, checks conditions, computes percentage, fixed, and BUY_X_GET_Y rewards, and resolves stacking order. Does NOT mutate or consume usage_count. Requires promotion.evaluate permission.
       operationId: postPromotionsEvaluate
       responses:
         '200':
-          description: Successful response
+          description: Evaluation calculated successfully
           content:
             application/json:
               schema:
@@ -1442,7 +2269,6 @@ paths:
       parameters:
       - $ref: '#/components/parameters/TenantHeader'
       - $ref: '#/components/parameters/RequestIdHeader'
-      - $ref: '#/components/parameters/IdempotencyHeader'
       requestBody:
         required: true
         content:
@@ -1454,8 +2280,15 @@ paths:
       tags:
       - POS
       summary: Open POS session
+      description: Validates terminal and cashier eligibility, records opening cash float, and opens a new POS shift session. Enforces terminal exclusivity (only one non-closed session per terminal). Requires session.open permission.
       operationId: postPosSessionsOpen
       responses:
+        '201':
+          description: Session opened successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PosSession'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1470,12 +2303,6 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '500':
           $ref: '#/components/responses/ServerError'
-        '201':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PosSession'
       parameters:
       - $ref: '#/components/parameters/TenantHeader'
       - $ref: '#/components/parameters/RequestIdHeader'
@@ -1491,6 +2318,7 @@ paths:
       tags:
       - POS
       summary: Get POS session
+      description: 'Retrieves a POS session by ID. Applies blind cash count confidentiality: active cashiers receive null for expected_cash, actual_cash, closing_cash, and variance during non-closed states (OPEN, CLOSING, VARIANCE_REVIEW). Requires session.read permission.'
       operationId: getPosSessionsId
       responses:
         '200':
@@ -1521,24 +2349,13 @@ paths:
         required: true
         schema:
           type: string
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-      - name: page_size
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 200
-          default: 50
+          format: uuid
   /pos/sessions/{id}/cash-in:
     post:
       tags:
       - POS
       summary: Cash in
+      description: Records an authorized cash deposit (e.g. float adjustment, pay-in) into the POS session drawer. Requires cash_movement.create permission and active session state.
       operationId: postPosSessionsIdCash-In
       responses:
         '200':
@@ -1570,6 +2387,7 @@ paths:
         required: true
         schema:
           type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -1581,6 +2399,7 @@ paths:
       tags:
       - POS
       summary: Cash out
+      description: Records an authorized cash withdrawal (e.g. pay-out, expense drop) from the POS session drawer. Enforces concurrency protection and triple-layer over-withdrawal defense. Returns 422 INSUFFICIENT_DRAWER_CASH without disclosing numeric drawer balances if requested amount exceeds expected cash. Requires cash_movement.create permission and active session state.
       operationId: postPosSessionsIdCash-Out
       responses:
         '200':
@@ -1612,6 +2431,7 @@ paths:
         required: true
         schema:
           type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -1623,6 +2443,7 @@ paths:
       tags:
       - POS
       summary: Close POS session
+      description: Submits the cashier's blind physical cash count and closes the session. If the cash count balances (variance == 0), the session transitions directly to CLOSED. If variance != 0, the session transitions to VARIANCE_REVIEW and sensitive expected cash and variance fields are masked from cashier response. Requires session.close permission.
       operationId: postPosSessionsIdClose
       responses:
         '200':
@@ -1654,17 +2475,63 @@ paths:
         required: true
         schema:
           type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CloseSessionRequest'
+  /pos/sessions/{id}/approve-variance:
+    post:
+      tags:
+      - POS
+      summary: Approve POS session cash variance
+      description: Supervisor approval for a POS session held in VARIANCE_REVIEW. Enforces Segregation of Duties (approver user ID cannot match shift cashier user ID; returns 403 SOD_VIOLATION). Requires session.variance.approve permission and store/company scope. Transitions session to CLOSED.
+      operationId: postPosSessionsIdApproveVariance
+      responses:
+        '200':
+          description: Variance approved and session closed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PosSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApproveVarianceRequest'
   /pos/sessions/{id}/summary:
     get:
       tags:
       - POS
       summary: Get POS session summary
+      description: Retrieves financial summary totals for a POS session. During active shifts (OPEN, CLOSING, VARIANCE_REVIEW), access is restricted to supervisors with session.variance.approve or session.summary.view_all permissions; cashier requests return 403 BLIND_COUNT_RESTRICTED.
       operationId: getPosSessionsIdSummary
       responses:
         '200':
@@ -1695,19 +2562,7 @@ paths:
         required: true
         schema:
           type: string
-      - name: page
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          default: 1
-      - name: page_size
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 200
-          default: 50
+          format: uuid
   /sales/orders:
     post:
       tags:
@@ -4565,6 +5420,13 @@ components:
           format: uuid
         currency:
           type: string
+        channel:
+          type: string
+          description: Channel context for pricing resolution (default POS)
+        price_list_id:
+          type: string
+          format: uuid
+          description: Optional explicit price list override
         items:
           type: array
           items:
@@ -4613,6 +5475,13 @@ components:
           minimum: 0
         currency:
           type: string
+      required:
+      - items
+      - subtotal
+      - discount_total
+      - tax_total
+      - grand_total
+      - currency
     PriceQuoteItem:
       type: object
       additionalProperties: false
@@ -4634,13 +5503,373 @@ components:
           type: number
           format: double
           minimum: 0
+      required:
+      - variant_id
+      - quantity
+      - unit_price
+      - discount
+      - net_amount
+    PriceList:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+        code:
+          type: string
+        name:
+          type: string
+        currency:
+          type: string
+        channel:
+          type: string
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - ARCHIVED
+        is_default:
+          type: boolean
+        version:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - tenant_id
+      - code
+      - name
+      - currency
+      - channel
+      - status
+      - is_default
+      - version
+      - created_at
+      - updated_at
+    CreatePriceListRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+        code:
+          type: string
+        name:
+          type: string
+        currency:
+          type: string
+        channel:
+          type: string
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - ARCHIVED
+        is_default:
+          type: boolean
+      required:
+      - code
+      - name
+      - currency
+      - channel
+    UpdatePriceListRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum:
+          - ACTIVE
+          - INACTIVE
+          - ARCHIVED
+        is_default:
+          type: boolean
+        version:
+          type: integer
+          format: int64
+      required:
+      - version
+    PriceListList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceList'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+      required:
+      - items
+      - total
+      - page
+      - page_size
+    PriceRule:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        price_list_id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        variant_id:
+          type: string
+          format: uuid
+          nullable: true
+        customer_group_id:
+          type: string
+          format: uuid
+          nullable: true
+        store_id:
+          type: string
+          format: uuid
+          nullable: true
+        min_qty:
+          type: number
+        unit_price:
+          type: number
+          format: double
+        priority:
+          type: integer
+        effective_from:
+          type: string
+          format: date-time
+        effective_to:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - APPROVED
+          - ACTIVE
+          - INACTIVE
+          - EXPIRED
+        version:
+          type: integer
+          format: int64
+      required:
+      - id
+      - tenant_id
+      - price_list_id
+      - product_id
+      - min_qty
+      - unit_price
+      - effective_from
+      - status
+      - version
+    CreatePriceRuleRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        price_list_id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        variant_id:
+          type: string
+          format: uuid
+          nullable: true
+        customer_group_id:
+          type: string
+          format: uuid
+          nullable: true
+        store_id:
+          type: string
+          format: uuid
+          nullable: true
+        min_qty:
+          type: number
+          minimum: 0.0001
+        unit_price:
+          type: number
+          format: double
+          minimum: 0
+        priority:
+          type: integer
+        effective_from:
+          type: string
+          format: date-time
+        effective_to:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - price_list_id
+      - product_id
+      - min_qty
+      - unit_price
+      - effective_from
+    UpdatePriceRuleRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        customer_group_id:
+          type: string
+          format: uuid
+          nullable: true
+        store_id:
+          type: string
+          format: uuid
+          nullable: true
+        min_qty:
+          type: number
+          minimum: 0.0001
+        unit_price:
+          type: number
+          format: double
+          minimum: 0
+        priority:
+          type: integer
+        effective_from:
+          type: string
+          format: date-time
+        effective_to:
+          type: string
+          format: date-time
+          nullable: true
+        reason:
+          type: string
+        version:
+          type: integer
+          format: int64
+      required:
+      - reason
+      - version
+    PriceRuleList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceRule'
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+      required:
+      - items
+      - total
+      - page
+      - page_size
+    RuleTransitionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+        version:
+          type: integer
+          format: int64
+      required:
+      - version
     PromotionCreateRequest:
       type: object
       additionalProperties: false
       properties:
         code:
           type: string
+          minLength: 1
+          maxLength: 100
         name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+        channel:
+          type: string
+          default: ALL
+        priority:
+          type: integer
+          default: 0
+        stacking_mode:
+          type: string
+          enum:
+          - STACKABLE
+          - EXCLUSIVE
+          - BEST_ONLY
+          default: STACKABLE
+        effective_from:
+          type: string
+          format: date-time
+          description: Canonical start timestamp of promotion validity
+        effective_to:
+          type: string
+          format: date-time
+          nullable: true
+          description: Canonical end timestamp of promotion validity
+        valid_from:
+          type: string
+          format: date-time
+          description: Backward-compatible alias for effective_from
+        valid_to:
+          type: string
+          format: date-time
+          nullable: true
+          description: Backward-compatible alias for effective_to
+        usage_limit:
+          type: integer
+          minimum: 1
+          nullable: true
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionConditionRequest'
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionRewardRequest'
+      required:
+      - code
+      - name
+    PromotionUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        channel:
           type: string
         priority:
           type: integer
@@ -4650,17 +5879,253 @@ components:
           - STACKABLE
           - EXCLUSIVE
           - BEST_ONLY
+        effective_from:
+          type: string
+          format: date-time
+        effective_to:
+          type: string
+          format: date-time
+          nullable: true
         valid_from:
           type: string
           format: date-time
         valid_to:
           type: string
           format: date-time
+          nullable: true
+        usage_limit:
+          type: integer
+          minimum: 1
+          nullable: true
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionConditionRequest'
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionRewardRequest'
+        version:
+          type: integer
+          format: int64
+          description: Concurrency version for optimistic locking
       required:
-      - code
-      - name
-      - valid_from
-      - valid_to
+      - version
+    PromotionConditionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        condition_type:
+          type: string
+          enum:
+          - MIN_ORDER_AMOUNT
+          - MIN_ITEM_QTY
+          - PRODUCT_IN_LIST
+          - CATEGORY_IN_LIST
+        condition_config:
+          oneOf:
+          - $ref: '#/components/schemas/MinOrderAmountConfig'
+          - $ref: '#/components/schemas/MinItemQtyConfig'
+          - $ref: '#/components/schemas/ProductInListConfig'
+          - $ref: '#/components/schemas/CategoryInListConfig'
+          description: Configuration payload matching condition_type (MinOrderAmountConfig, MinItemQtyConfig, ProductInListConfig, or CategoryInListConfig)
+        sequence_no:
+          type: integer
+          minimum: 1
+      required:
+      - condition_type
+      - condition_config
+    PromotionRewardRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reward_type:
+          type: string
+          enum:
+          - PERCENTAGE_DISCOUNT
+          - FIXED_AMOUNT_DISCOUNT
+          - BUY_X_GET_Y
+        reward_config:
+          oneOf:
+          - $ref: '#/components/schemas/PercentageDiscountConfig'
+          - $ref: '#/components/schemas/FixedAmountDiscountConfig'
+          - $ref: '#/components/schemas/BuyXGetYConfig'
+          description: Configuration payload matching reward_type (PercentageDiscountConfig, FixedAmountDiscountConfig, or BuyXGetYConfig)
+        sequence_no:
+          type: integer
+          minimum: 1
+      required:
+      - reward_type
+      - reward_config
+    MinOrderAmountConfig:
+      type: object
+      additionalProperties: false
+      properties:
+        min_amount:
+          type: number
+          format: double
+          minimum: 0
+      required:
+      - min_amount
+    MinItemQtyConfig:
+      type: object
+      additionalProperties: false
+      properties:
+        min_qty:
+          type: number
+          minimum: 0.001
+        product_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        category_ids:
+          type: array
+          items:
+            type: string
+      required:
+      - min_qty
+    ProductInListConfig:
+      type: object
+      additionalProperties: false
+      properties:
+        product_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        variant_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+    CategoryInListConfig:
+      type: object
+      additionalProperties: false
+      properties:
+        category_ids:
+          type: array
+          items:
+            type: string
+      required:
+      - category_ids
+    PercentageDiscountConfig:
+      type: object
+      additionalProperties: false
+      properties:
+        percentage:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+        max_discount_amount:
+          type: number
+          format: double
+          minimum: 0
+          nullable: true
+      required:
+      - percentage
+    FixedAmountDiscountConfig:
+      type: object
+      additionalProperties: false
+      properties:
+        amount:
+          type: number
+          format: double
+          minimum: 0
+      required:
+      - amount
+    BuyXGetYConfig:
+      type: object
+      additionalProperties: false
+      properties:
+        buy_qty:
+          type: number
+          minimum: 0.001
+          description: Quantity of qualifying item required (X)
+        get_qty:
+          type: number
+          minimum: 0.001
+          description: Quantity of bonus item rewarded (Y)
+        reward_product_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Product ID of the reward item; if omitted, same product as qualifying item
+        reward_variant_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional variant ID of the reward item
+        reward_item_name:
+          type: string
+          description: Optional display name of bonus item
+        discount_percentage:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          default: 100
+          description: Discount percentage on the bonus item (default 100 for free item)
+        max_applications:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Maximum application trigger sets permitted per cart
+      required:
+      - buy_qty
+      - get_qty
+    PromotionCondition:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        promotion_id:
+          type: string
+          format: uuid
+        condition_type:
+          type: string
+        condition_config:
+          oneOf:
+          - $ref: '#/components/schemas/MinOrderAmountConfig'
+          - $ref: '#/components/schemas/MinItemQtyConfig'
+          - $ref: '#/components/schemas/ProductInListConfig'
+          - $ref: '#/components/schemas/CategoryInListConfig'
+        sequence_no:
+          type: integer
+      required:
+      - id
+      - promotion_id
+      - condition_type
+      - condition_config
+      - sequence_no
+    PromotionReward:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        promotion_id:
+          type: string
+          format: uuid
+        reward_type:
+          type: string
+        reward_config:
+          oneOf:
+          - $ref: '#/components/schemas/PercentageDiscountConfig'
+          - $ref: '#/components/schemas/FixedAmountDiscountConfig'
+          - $ref: '#/components/schemas/BuyXGetYConfig'
+        sequence_no:
+          type: integer
+      required:
+      - id
+      - promotion_id
+      - reward_type
+      - reward_config
+      - sequence_no
     Promotion:
       type: object
       additionalProperties: false
@@ -4668,30 +6133,128 @@ components:
         id:
           type: string
           format: uuid
+        tenant_id:
+          type: string
+          format: uuid
         code:
           type: string
         name:
           type: string
+        description:
+          type: string
+        channel:
+          type: string
         status:
           type: string
+          enum:
+          - DRAFT
+          - PENDING_APPROVAL
+          - APPROVED
+          - SCHEDULED
+          - ACTIVE
+          - PAUSED
+          - EXPIRED
+          - REJECTED
+          - CANCELLED
         priority:
           type: integer
         stacking_mode:
           type: string
-        version:
-          type: integer
+          enum:
+          - STACKABLE
+          - EXCLUSIVE
+          - BEST_ONLY
+        effective_from:
+          type: string
+          format: date-time
+        effective_to:
+          type: string
+          format: date-time
+          nullable: true
         valid_from:
           type: string
           format: date-time
+          description: Backward-compatible alias for effective_from
         valid_to:
           type: string
           format: date-time
+          nullable: true
+          description: Backward-compatible alias for effective_to
+        usage_limit:
+          type: integer
+          nullable: true
+        usage_count:
+          type: integer
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionCondition'
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionReward'
+        version:
+          type: integer
+          format: int64
+        created_by:
+          type: string
+          format: uuid
+          nullable: true
+        updated_by:
+          type: string
+          format: uuid
+          nullable: true
+        approved_by:
+          type: string
+          format: uuid
+          nullable: true
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - tenant_id
+      - code
+      - name
+      - status
+      - priority
+      - stacking_mode
+      - effective_from
+      - version
+    PromotionTransitionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          description: Canonical documented reason or operational justification for transition
+        comment:
+          type: string
+          description: Backward-compatible alias for reason
+        version:
+          type: integer
+          format: int64
+          description: Current promotion version for optimistic locking
+      required:
+      - version
     ApprovalRequest:
       type: object
       additionalProperties: false
       properties:
+        reason:
+          type: string
         comment:
           type: string
+        version:
+          type: integer
+          format: int64
     PromotionEvaluateRequest:
       type: object
       additionalProperties: false
@@ -4699,25 +6262,64 @@ components:
         store_id:
           type: string
           format: uuid
-        customer_id:
+          nullable: true
+        channel:
+          type: string
+          default: POS
+        customer_tier:
+          type: string
+        customer_group_id:
           type: string
           format: uuid
+          nullable: true
+        evaluation_time:
+          type: string
+          format: date-time
+          nullable: true
         items:
           type: array
           items:
-            $ref: '#/components/schemas/CartItem'
+            $ref: '#/components/schemas/PromotionCartItem'
         voucher_codes:
           type: array
           items:
             type: string
+      required:
+      - items
+    PromotionCartItem:
+      type: object
+      additionalProperties: false
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        variant_id:
+          type: string
+          format: uuid
+          nullable: true
+        category_id:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: number
+          minimum: 0.001
+        unit_price:
+          type: number
+          format: double
+          minimum: 0
+      required:
+      - product_id
+      - quantity
+      - unit_price
     PromotionEvaluation:
       type: object
       additionalProperties: false
       properties:
-        applied:
-          type: array
-          items:
-            $ref: '#/components/schemas/AppliedPromotion'
+        subtotal:
+          type: number
+          format: double
+          minimum: 0
         discount_total:
           type: number
           format: double
@@ -4726,8 +6328,24 @@ components:
           type: number
           format: double
           minimum: 0
-        currency:
-          type: string
+        applied_promotions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedPromotion'
+        applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedPromotion'
+          description: Backward-compatible alias for applied_promotions
+        bonus_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BonusItem'
+      required:
+      - subtotal
+      - discount_total
+      - net_total
+      - applied_promotions
     AppliedPromotion:
       type: object
       additionalProperties: false
@@ -4735,17 +6353,64 @@ components:
         promotion_id:
           type: string
           format: uuid
+        promotion_code:
+          type: string
         code:
           type: string
-        version:
-          type: integer
+          description: Backward-compatible alias for promotion_code
+        promotion_name:
+          type: string
+        discount_amount:
+          type: number
+          format: double
+          minimum: 0
         discount:
           type: number
           format: double
           minimum: 0
-        snapshot:
+          description: Backward-compatible alias for discount_amount
+        reward_type:
+          type: string
+        rule_snapshot:
           type: object
           additionalProperties: true
+      required:
+      - promotion_id
+      - promotion_code
+      - discount_amount
+      - reward_type
+    BonusItem:
+      type: object
+      additionalProperties: false
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        variant_id:
+          type: string
+          format: uuid
+          nullable: true
+        item_name:
+          type: string
+        free_quantity:
+          type: number
+          minimum: 0.001
+        discount_amount:
+          type: number
+          format: double
+          minimum: 0
+        promotion_id:
+          type: string
+          format: uuid
+        promotion_code:
+          type: string
+      required:
+      - product_id
+      - item_name
+      - free_quantity
+      - discount_amount
+      - promotion_id
+      - promotion_code
     OpenSessionRequest:
       type: object
       additionalProperties: false
@@ -4771,12 +6436,20 @@ components:
           type: number
           format: double
           minimum: 0
+          exclusiveMinimum: true
+          description: Cash movement amount (strictly positive)
         reason:
           type: string
+          minLength: 3
+          maxLength: 255
+          description: Mandatory operational reason for cash movement
         reference:
           type: string
+          maxLength: 100
+          description: Optional business reference identifier
       required:
       - amount
+      - reason
     CloseSessionRequest:
       type: object
       additionalProperties: false
@@ -4785,10 +6458,24 @@ components:
           type: number
           format: double
           minimum: 0
+          description: Cashier counted physical cash present in the drawer (blind count)
         comment:
           type: string
+          maxLength: 255
+          description: Optional closing comment or handover notes
       required:
       - closing_cash
+    ApproveVarianceRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          minLength: 5
+          maxLength: 500
+          description: Mandatory documented justification for approving the cash variance
+      required:
+      - reason
     PosSession:
       type: object
       additionalProperties: false
@@ -4796,17 +6483,41 @@ components:
         id:
           type: string
           format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        company_id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
         terminal_id:
           type: string
           format: uuid
+        cashier_user_id:
+          type: string
+          format: uuid
+        session_number:
+          type: string
+          example: SES-20261011-AB12CD
         status:
           type: string
+          enum:
+          - OPENING
+          - OPEN
+          - ACTIVE
+          - CLOSING
+          - CLOSED
+          - VARIANCE_REVIEW
+          description: POS session lifecycle state
         opened_at:
           type: string
           format: date-time
         closed_at:
           type: string
           format: date-time
+          nullable: true
         opening_cash:
           type: number
           format: double
@@ -4815,14 +6526,54 @@ components:
           type: number
           format: double
           minimum: 0
+          nullable: true
+          description: Physical cash closing count. Masked (null) for active shift cashier.
+        actual_cash:
+          type: number
+          format: double
+          nullable: true
+          description: Cashier submitted physical count. Masked (null) for active shift cashier.
         expected_cash:
           type: number
           format: double
           minimum: 0
+          nullable: true
+          description: Authoritative expected drawer balance. Masked (null) for active shift cashier.
         variance:
           type: number
+          format: double
+          nullable: true
+          description: Calculated cash variance. Masked (null) for active shift cashier.
         currency:
           type: string
+          example: IDR
+        variance_approved_by:
+          type: string
+          format: uuid
+          nullable: true
+        variance_approved_at:
+          type: string
+          format: date-time
+          nullable: true
+        variance_reason:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int64
+          minimum: 1
+      required:
+      - id
+      - terminal_id
+      - status
+      - opened_at
+      - opening_cash
     CashMovement:
       type: object
       additionalProperties: false
@@ -4830,23 +6581,58 @@ components:
         id:
           type: string
           format: uuid
+        tenant_id:
+          type: string
+          format: uuid
         session_id:
           type: string
           format: uuid
         type:
           type: string
+          enum:
+          - CASH_IN
+          - CASH_OUT
+          - FLOAT_ADJUSTMENT
+          - PAY_IN
+          - PAY_OUT
+          - EXPENSE_DROP
+          - SALE
+          - REFUND
+          - OPENING
+          - CLOSING
+          - ADJUSTMENT
+          description: Cash movement classification type
         amount:
           type: number
           format: double
           minimum: 0
+          exclusiveMinimum: true
         reason:
           type: string
+        reference_type:
+          type: string
+          nullable: true
+        reference_id:
+          type: string
+          format: uuid
+          nullable: true
         created_at:
           type: string
           format: date-time
+        created_by:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - id
+      - session_id
+      - type
+      - amount
+      - created_at
     PosSessionSummary:
       type: object
       additionalProperties: false
+      description: Financial summary totals for a POS session. Access is restricted to supervisors during active shifts (OPEN, CLOSING, VARIANCE_REVIEW); cashier requests return 403 BLIND_COUNT_RESTRICTED.
       properties:
         session:
           $ref: '#/components/schemas/PosSession'

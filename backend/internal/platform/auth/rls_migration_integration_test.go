@@ -87,6 +87,9 @@ func newMigratedAuthPools(t *testing.T) (*pgxpool.Pool, *pgxpool.Pool) {
 		"000003_outbox_leases.sql",
 		"000004_audit_hardening.sql",
 		"000005_auth_rls_bootstrap.sql",
+		"000006_identity_permissions.sql",
+		"000008_organization_hardening.sql",
+		"000009_master_hardening.sql",
 	} {
 		migration, err := os.ReadFile(filepath.Join(migrationDir, name))
 		if err != nil {
