@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nexora-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${NEXORA_DB_NAME:-nexora}
+      POSTGRES_USER: ${NEXORA_DB_USER:-nexora_admin}
+      POSTGRES_PASSWORD: ${NEXORA_DB_PASSWORD:-nexora_secret_dev}
+    ports:
+      - "${NEXORA_DB_PORT:-5432}:5432"
+    volumes:
+      - nexora_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${NEXORA_DB_USER:-nexora_admin} -d ${NEXORA_DB_NAME:-nexora}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexora-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${NEXORA_REDIS_PASSWORD:-nexora_redis_dev}"]
+    ports:
+      - "${NEXORA_REDIS_PORT:-6379}:6379"
+    volumes:
+      - nexora_redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${NEXORA_REDIS_PASSWORD:-nexora_redis_dev} ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  nexora_postgres_data:
+    name: nexora_postgres_data
+  nexora_redis_data:
+    name: nexora_redis_data

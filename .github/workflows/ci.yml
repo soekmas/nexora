@@ -1,0 +1,106 @@
+name: NEXORA CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  backend-verification:
+    name: Backend (Go) Verification
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: nexora_test
+          POSTGRES_PASSWORD: test_secret_pass
+          POSTGRES_DB: nexora_test
+        ports:
+          - 15432:5432
+        options: >-
+          --health-cmd "pg_isready -U nexora_test -d nexora_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.27'
+          cache: true
+
+      - name: Verify Formatting
+        run: |
+          if [ -n "$(gofmt -l backend apps/api apps/worker)" ]; then
+            echo "Go code is not formatted. Run 'make fmt'."
+            exit 1
+          fi
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v2.14.0
+
+      - name: Compile API and Worker
+        run: |
+          go build -v ./apps/api/cmd/api
+          go build -v ./apps/worker/cmd/worker
+
+      - name: Run Backend Tests
+        run: go test -v -race -cover ./backend/... ./apps/api/... ./apps/worker/...
+
+      - name: Verify Baseline Migration Unchanged
+        run: |
+          EXPECTED="e7cefc2dfcdcf2b90a8418dcc2da8a091289ee00a5806c08278bf1516d5fb09f"
+          ACTUAL=$(sha256sum db/migrations/000001_baseline_hardened.sql | awk '{print $1}')
+          if [ "$EXPECTED" != "$ACTUAL" ]; then
+            echo "Baseline migration has been modified!"
+            exit 1
+          fi
+
+  frontend-verification:
+    name: Frontend (pos-web) Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint Frontend
+        run: pnpm --filter @nexora/pos-web lint
+
+      - name: Build Frontend
+        run: pnpm --filter @nexora/pos-web build
+
+  contract-verification:
+    name: Contract (OpenAPI) Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Lint OpenAPI Contract
+        run: npx --yes @redocly/cli lint contracts/openapi/openapi-v1.0.0.yaml

@@ -1,0 +1,6107 @@
+openapi: 3.0.3
+info:
+  title: NEXORA Retail Business Platform API
+  version: 1.0.0
+  description: Enterprise POS / Retail Platform API. Modular-monolith, API-first,
+    tenant-aware, idempotent, audit-ready, and ERP-ready.
+servers:
+- url: https://api.example.com/api/v1
+  description: Production placeholder
+- url: https://staging-api.example.com/api/v1
+  description: Staging placeholder
+tags:
+- name: Auth
+- name: Organization
+- name: Master Data
+- name: CRM
+- name: Pricing
+- name: Promotion
+- name: POS
+- name: Sales
+- name: Payment
+- name: Inventory
+- name: Purchasing
+- name: Loyalty
+- name: Voucher
+- name: Workflow
+- name: Audit
+- name: Integration
+- name: Reporting
+security:
+- bearerAuth: []
+paths:
+  /auth/login:
+    post:
+      tags:
+      - Auth
+      summary: Login
+      operationId: postAuthLogin
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+  /auth/refresh:
+    post:
+      tags:
+      - Auth
+      summary: Refresh access token
+      operationId: postAuthRefresh
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+  /auth/logout:
+    post:
+      tags:
+      - Auth
+      summary: Logout
+      operationId: postAuthLogout
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+  /auth/mfa/verify:
+    post:
+      tags:
+      - Auth
+      summary: Verify MFA
+      operationId: postAuthMfaVerify
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaVerifyRequest'
+  /auth/me:
+    get:
+      tags:
+      - Auth
+      summary: Get current user
+      operationId: getAuthMe
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserContext'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /companies:
+    get:
+      tags:
+      - Organization
+      summary: List companies
+      operationId: getCompanies
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /regions:
+    get:
+      tags:
+      - Organization
+      summary: List regions
+      operationId: getRegions
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegionList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /stores:
+    get:
+      tags:
+      - Organization
+      summary: List stores
+      operationId: getStores
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /warehouses:
+    get:
+      tags:
+      - Organization
+      summary: List warehouses
+      operationId: getWarehouses
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarehouseList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /terminals:
+    get:
+      tags:
+      - Organization
+      summary: List terminals
+      operationId: getTerminals
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TerminalList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /terminals/{id}/heartbeat:
+    post:
+      tags:
+      - Organization
+      summary: Update terminal heartbeat
+      operationId: postTerminalsIdHeartbeat
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Terminal'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HeartbeatRequest'
+  /products:
+    get:
+      tags:
+      - Master Data
+      summary: List products
+      operationId: getProducts
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+    post:
+      tags:
+      - Master Data
+      summary: Create product
+      operationId: postProducts
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreateRequest'
+  /products/{id}:
+    get:
+      tags:
+      - Master Data
+      summary: Get product
+      operationId: getProductsId
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+    patch:
+      tags:
+      - Master Data
+      summary: Update product
+      operationId: patchProductsId
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductUpdateRequest'
+  /products/{id}/activate:
+    post:
+      tags:
+      - Master Data
+      summary: Activate product
+      operationId: postProductsIdActivate
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmptyRequest'
+  /products/{id}/deactivate:
+    post:
+      tags:
+      - Master Data
+      summary: Deactivate product
+      operationId: postProductsIdDeactivate
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+  /products/{id}/barcodes:
+    get:
+      tags:
+      - Master Data
+      summary: List product barcodes
+      operationId: getProductsIdBarcodes
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BarcodeList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+    post:
+      tags:
+      - Master Data
+      summary: Add product barcode
+      operationId: postProductsIdBarcodes
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Barcode'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BarcodeCreateRequest'
+  /products/lookup/barcode/{barcode}:
+    get:
+      tags:
+      - Master Data
+      summary: Lookup product by barcode
+      operationId: getProductsLookupBarcodeBarcode
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: barcode
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /customers:
+    get:
+      tags:
+      - CRM
+      summary: List customers
+      operationId: getCustomers
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+    post:
+      tags:
+      - CRM
+      summary: Create customer
+      operationId: postCustomers
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerCreateRequest'
+  /customers/{id}:
+    get:
+      tags:
+      - CRM
+      summary: Get customer
+      operationId: getCustomersId
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+    patch:
+      tags:
+      - CRM
+      summary: Update customer
+      operationId: patchCustomersId
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerUpdateRequest'
+  /customers/{id}/addresses:
+    get:
+      tags:
+      - CRM
+      summary: List customer addresses
+      operationId: getCustomersIdAddresses
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+    post:
+      tags:
+      - CRM
+      summary: Add customer address
+      operationId: postCustomersIdAddresses
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Address'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddressCreateRequest'
+  /pricing/quote:
+    post:
+      tags:
+      - Pricing
+      summary: Calculate price quote
+      operationId: postPricingQuote
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceQuote'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriceQuoteRequest'
+  /promotions:
+    get:
+      tags:
+      - Promotion
+      summary: List promotions
+      operationId: getPromotions
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromotionList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+    post:
+      tags:
+      - Promotion
+      summary: Create promotion
+      operationId: postPromotions
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Promotion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotionCreateRequest'
+  /promotions/{id}:
+    get:
+      tags:
+      - Promotion
+      summary: Get promotion
+      operationId: getPromotionsId
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Promotion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /promotions/{id}/approve:
+    post:
+      tags:
+      - Promotion
+      summary: Approve promotion
+      operationId: postPromotionsIdApprove
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Promotion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalRequest'
+  /promotions/{id}/activate:
+    post:
+      tags:
+      - Promotion
+      summary: Activate promotion
+      operationId: postPromotionsIdActivate
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Promotion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmptyRequest'
+  /promotions/{id}/deactivate:
+    post:
+      tags:
+      - Promotion
+      summary: Deactivate promotion
+      operationId: postPromotionsIdDeactivate
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Promotion'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+  /promotions/evaluate:
+    post:
+      tags:
+      - Promotion
+      summary: Evaluate promotions for cart
+      operationId: postPromotionsEvaluate
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromotionEvaluation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotionEvaluateRequest'
+  /pos/sessions/open:
+    post:
+      tags:
+      - POS
+      summary: Open POS session
+      operationId: postPosSessionsOpen
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PosSession'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenSessionRequest'
+  /pos/sessions/{id}:
+    get:
+      tags:
+      - POS
+      summary: Get POS session
+      operationId: getPosSessionsId
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PosSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /pos/sessions/{id}/cash-in:
+    post:
+      tags:
+      - POS
+      summary: Cash in
+      operationId: postPosSessionsIdCash-In
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashMovement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashMovementRequest'
+  /pos/sessions/{id}/cash-out:
+    post:
+      tags:
+      - POS
+      summary: Cash out
+      operationId: postPosSessionsIdCash-Out
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashMovement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CashMovementRequest'
+  /pos/sessions/{id}/close:
+    post:
+      tags:
+      - POS
+      summary: Close POS session
+      operationId: postPosSessionsIdClose
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PosSession'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloseSessionRequest'
+  /pos/sessions/{id}/summary:
+    get:
+      tags:
+      - POS
+      summary: Get POS session summary
+      operationId: getPosSessionsIdSummary
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PosSessionSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /sales/orders:
+    post:
+      tags:
+      - Sales
+      summary: Create sales order
+      operationId: postSalesOrders
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrder'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesOrderCreateRequest'
+    get:
+      tags:
+      - Sales
+      summary: List sales orders
+      operationId: getSalesOrders
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrderList'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /sales/orders/{id}:
+    get:
+      tags:
+      - Sales
+      summary: Get sales order
+      operationId: getSalesOrdersId
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /sales/orders/{id}/confirm:
+    post:
+      tags:
+      - Sales
+      summary: Confirm sales order
+      operationId: postSalesOrdersIdConfirm
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmOrderRequest'
+  /sales/orders/{id}/cancel:
+    post:
+      tags:
+      - Sales
+      summary: Cancel sales order
+      operationId: postSalesOrdersIdCancel
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+  /sales/orders/{id}/void:
+    post:
+      tags:
+      - Sales
+      summary: Void sales order
+      operationId: postSalesOrdersIdVoid
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoidOrderRequest'
+  /sales/orders/{id}/history:
+    get:
+      tags:
+      - Sales
+      summary: Get sales order history
+      operationId: getSalesOrdersIdHistory
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusHistoryList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /payments:
+    post:
+      tags:
+      - Payment
+      summary: Create payment
+      operationId: postPayments
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCreateRequest'
+  /payments/{id}:
+    get:
+      tags:
+      - Payment
+      summary: Get payment
+      operationId: getPaymentsId
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /payments/{id}/attempts:
+    get:
+      tags:
+      - Payment
+      summary: List payment attempts
+      operationId: getPaymentsIdAttempts
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentAttemptList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /payments/{id}/history:
+    get:
+      tags:
+      - Payment
+      summary: Get payment history
+      operationId: getPaymentsIdHistory
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusHistoryList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /payments/{id}/process:
+    post:
+      tags:
+      - Payment
+      summary: Process payment
+      operationId: postPaymentsIdProcess
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentProcessRequest'
+  /payments/{id}/refund:
+    post:
+      tags:
+      - Payment
+      summary: Request/refund payment
+      operationId: postPaymentsIdRefund
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Refund'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundRequest'
+  /payments/webhooks/{provider}:
+    post:
+      tags:
+      - Payment
+      summary: Receive provider webhook
+      operationId: postPaymentsWebhooksProvider
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '202':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookAccepted'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookRequest'
+  /inventory/stocks:
+    get:
+      tags:
+      - Inventory
+      summary: List stock balances
+      operationId: getInventoryStocks
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /inventory/stocks/{variant_id}:
+    get:
+      tags:
+      - Inventory
+      summary: Get stock by variant
+      operationId: getInventoryStocksVariant_Id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stock'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: variant_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /inventory/ledger:
+    get:
+      tags:
+      - Inventory
+      summary: List stock ledger
+      operationId: getInventoryLedger
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockLedgerList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /inventory/reservations:
+    post:
+      tags:
+      - Inventory
+      summary: Reserve stock
+      operationId: postInventoryReservations
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockReservation'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockReservationRequest'
+  /inventory/reservations/{id}/release:
+    post:
+      tags:
+      - Inventory
+      summary: Release stock reservation
+      operationId: postInventoryReservationsIdRelease
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockReservation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+  /inventory/adjustments:
+    post:
+      tags:
+      - Inventory
+      summary: Create stock adjustment
+      operationId: postInventoryAdjustments
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockAdjustment'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockAdjustmentRequest'
+  /inventory/adjustments/{id}/approve:
+    post:
+      tags:
+      - Inventory
+      summary: Approve stock adjustment
+      operationId: postInventoryAdjustmentsIdApprove
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockAdjustment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalRequest'
+  /inventory/adjustments/{id}/post:
+    post:
+      tags:
+      - Inventory
+      summary: Post stock adjustment
+      operationId: postInventoryAdjustmentsIdPost
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockAdjustment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmptyRequest'
+  /inventory/transfers:
+    post:
+      tags:
+      - Inventory
+      summary: Create stock transfer
+      operationId: postInventoryTransfers
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockTransfer'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StockTransferRequest'
+  /inventory/transfers/{id}/approve:
+    post:
+      tags:
+      - Inventory
+      summary: Approve stock transfer
+      operationId: postInventoryTransfersIdApprove
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockTransfer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalRequest'
+  /inventory/transfers/{id}/ship:
+    post:
+      tags:
+      - Inventory
+      summary: Ship stock transfer
+      operationId: postInventoryTransfersIdShip
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockTransfer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmptyRequest'
+  /inventory/transfers/{id}/receive:
+    post:
+      tags:
+      - Inventory
+      summary: Receive stock transfer
+      operationId: postInventoryTransfersIdReceive
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockTransfer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReceiveTransferRequest'
+  /suppliers:
+    get:
+      tags:
+      - Purchasing
+      summary: List suppliers
+      operationId: getSuppliers
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+    post:
+      tags:
+      - Purchasing
+      summary: Create supplier
+      operationId: postSuppliers
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierCreateRequest'
+  /purchasing/orders:
+    post:
+      tags:
+      - Purchasing
+      summary: Create purchase order
+      operationId: postPurchasingOrders
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrder'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseOrderCreateRequest'
+  /purchasing/orders/{id}:
+    get:
+      tags:
+      - Purchasing
+      summary: Get purchase order
+      operationId: getPurchasingOrdersId
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /purchasing/orders/{id}/approve:
+    post:
+      tags:
+      - Purchasing
+      summary: Approve purchase order
+      operationId: postPurchasingOrdersIdApprove
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovalRequest'
+  /purchasing/orders/{id}/cancel:
+    post:
+      tags:
+      - Purchasing
+      summary: Cancel purchase order
+      operationId: postPurchasingOrdersIdCancel
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseOrder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReasonRequest'
+  /purchasing/goods-receipts:
+    post:
+      tags:
+      - Purchasing
+      summary: Create goods receipt
+      operationId: postPurchasingGoods-Receipts
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+        '201':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoodsReceipt'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoodsReceiptCreateRequest'
+  /purchasing/goods-receipts/{id}/post:
+    post:
+      tags:
+      - Purchasing
+      summary: Post goods receipt
+      operationId: postPurchasingGoods-ReceiptsIdPost
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoodsReceipt'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmptyRequest'
+  /loyalty/accounts/{customer_id}:
+    get:
+      tags:
+      - Loyalty
+      summary: Get loyalty account
+      operationId: getLoyaltyAccountsCustomer_Id
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoyaltyAccount'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: customer_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /loyalty/accounts/{customer_id}/transactions:
+    get:
+      tags:
+      - Loyalty
+      summary: List loyalty transactions
+      operationId: getLoyaltyAccountsCustomer_IdTransactions
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoyaltyTransactionList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: customer_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /loyalty/redeem:
+    post:
+      tags:
+      - Loyalty
+      summary: Redeem loyalty points
+      operationId: postLoyaltyRedeem
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoyaltyTransaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoyaltyRedeemRequest'
+  /loyalty/earn:
+    post:
+      tags:
+      - Loyalty
+      summary: Earn loyalty points
+      operationId: postLoyaltyEarn
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoyaltyTransaction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoyaltyEarnRequest'
+  /vouchers/{code}:
+    get:
+      tags:
+      - Voucher
+      summary: Get voucher
+      operationId: getVouchersCode
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Voucher'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: code
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /vouchers/validate:
+    post:
+      tags:
+      - Voucher
+      summary: Validate voucher
+      operationId: postVouchersValidate
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherValidation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoucherValidateRequest'
+  /vouchers/redeem:
+    post:
+      tags:
+      - Voucher
+      summary: Redeem voucher
+      operationId: postVouchersRedeem
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoucherRedemption'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoucherRedeemRequest'
+  /workflow/instances/{id}:
+    get:
+      tags:
+      - Workflow
+      summary: Get workflow instance
+      operationId: getWorkflowInstancesId
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /workflow/instances/{id}/history:
+    get:
+      tags:
+      - Workflow
+      summary: Get workflow history
+      operationId: getWorkflowInstancesIdHistory
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowHistoryList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /workflow/definitions:
+    get:
+      tags:
+      - Workflow
+      summary: List workflow definitions
+      operationId: getWorkflowDefinitions
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowDefinitionList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+    post:
+      tags:
+      - Workflow
+      summary: Create workflow definition
+      operationId: postWorkflowDefinitions
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowDefinition'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowDefinitionCreateRequest'
+  /audit/logs:
+    get:
+      tags:
+      - Audit
+      summary: List audit logs
+      operationId: getAuditLogs
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /audit/logs/{id}:
+    get:
+      tags:
+      - Audit
+      summary: Get audit log
+      operationId: getAuditLogsId
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLog'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /audit/security-events:
+    get:
+      tags:
+      - Audit
+      summary: List security events
+      operationId: getAuditSecurity-Events
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurityEventList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /audit/login-history:
+    get:
+      tags:
+      - Audit
+      summary: List login history
+      operationId: getAuditLogin-History
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginHistoryList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /audit/export:
+    post:
+      tags:
+      - Audit
+      summary: Export audit data
+      operationId: postAuditExport
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportJob'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuditExportRequest'
+  /integrations/outbox:
+    get:
+      tags:
+      - Integration
+      summary: List outbox events
+      operationId: getIntegrationsOutbox
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutboxList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /integrations/outbox/{id}:
+    get:
+      tags:
+      - Integration
+      summary: Get outbox event
+      operationId: getIntegrationsOutboxId
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutboxEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /integrations/outbox/{id}/retry:
+    post:
+      tags:
+      - Integration
+      summary: Retry outbox delivery
+      operationId: postIntegrationsOutboxIdRetry
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutboxEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - $ref: '#/components/parameters/IdempotencyHeader'
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetryRequest'
+  /reports/sales-summary:
+    get:
+      tags:
+      - Reporting
+      summary: Sales summary
+      operationId: getReportsSales-Summary
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /reports/payment-summary:
+    get:
+      tags:
+      - Reporting
+      summary: Payment summary
+      operationId: getReportsPayment-Summary
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /reports/inventory-summary:
+    get:
+      tags:
+      - Reporting
+      summary: Inventory summary
+      operationId: getReportsInventory-Summary
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+  /reports/store-performance:
+    get:
+      tags:
+      - Reporting
+      summary: Store performance
+      operationId: getReportsStore-Performance
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+      parameters:
+      - $ref: '#/components/parameters/TenantHeader'
+      - $ref: '#/components/parameters/RequestIdHeader'
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    TenantHeader:
+      name: X-Tenant-ID
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Tenant context. Server must validate user scope.
+    RequestIdHeader:
+      name: X-Request-ID
+      in: header
+      required: false
+      schema:
+        type: string
+      description: Caller correlation ID; server generates one when absent.
+    IdempotencyHeader:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        maxLength: 128
+      description: Required for retryable financial/business commands; same key with
+        different request hash is rejected.
+  responses:
+    BadRequest:
+      description: Malformed request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Authentication required or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Permission or scope denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: State, concurrency, idempotency, or business conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ValidationError:
+      description: Business/input validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ServerError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    EmptyRequest:
+      type: object
+      additionalProperties: false
+      properties: {}
+    EmptyResponse:
+      type: object
+      additionalProperties: false
+      properties: {}
+    ErrorDetail:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        field:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+        request_id:
+          type: string
+      required:
+      - error
+      - request_id
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        mfa_code:
+          type: string
+      required:
+      - username
+      - password
+    RefreshRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        refresh_token:
+          type: string
+      required:
+      - refresh_token
+    LogoutRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        session_id:
+          type: string
+          format: uuid
+    MfaVerifyRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        challenge_id:
+          type: string
+        code:
+          type: string
+      required:
+      - challenge_id
+      - code
+    AuthResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+        user:
+          $ref: '#/components/schemas/UserContext'
+      required:
+      - access_token
+      - token_type
+      - expires_in
+      - user
+    UserContext:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        display_name:
+          type: string
+        tenant_id:
+          type: string
+          format: uuid
+        company_id:
+          type: string
+          format: uuid
+        region_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        store_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        warehouse_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        terminal_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        permissions:
+          type: array
+          items:
+            type: string
+    HeartbeatRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+        app_version:
+          type: string
+        device_time:
+          type: string
+          format: date-time
+    ProductCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        sku:
+          type: string
+        name:
+          type: string
+        brand_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+        uom_id:
+          type: string
+          format: uuid
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductVariant'
+      required:
+      - sku
+      - name
+    ProductUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        brand_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+        uom_id:
+          type: string
+          format: uuid
+    ReasonRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+      required:
+      - reason
+    BarcodeCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        barcode:
+          type: string
+        type:
+          type: string
+      required:
+      - barcode
+    Barcode:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        barcode:
+          type: string
+        type:
+          type: string
+        product_variant_id:
+          type: string
+          format: uuid
+    ProductVariant:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        name:
+          type: string
+        product_id:
+          type: string
+          format: uuid
+        price:
+          type: number
+          format: double
+          minimum: 0
+        currency:
+          type: string
+        active:
+          type: boolean
+    Product:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        name:
+          type: string
+        brand_id:
+          type: string
+          format: uuid
+        category_id:
+          type: string
+          format: uuid
+        active:
+          type: boolean
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductVariant'
+    CustomerCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        customer_no:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        group_id:
+          type: string
+          format: uuid
+      required:
+      - name
+    CustomerUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        group_id:
+          type: string
+          format: uuid
+    Customer:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_no:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        group_id:
+          type: string
+          format: uuid
+        active:
+          type: boolean
+    AddressCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        label:
+          type: string
+        recipient_name:
+          type: string
+        phone:
+          type: string
+        address_line1:
+          type: string
+        city:
+          type: string
+        province:
+          type: string
+        postal_code:
+          type: string
+        country_code:
+          type: string
+    Address:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        recipient_name:
+          type: string
+        phone:
+          type: string
+        address_line1:
+          type: string
+        city:
+          type: string
+        province:
+          type: string
+        postal_code:
+          type: string
+        country_code:
+          type: string
+    PriceQuoteRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        store_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        currency:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+      required:
+      - store_id
+      - currency
+      - items
+    CartItem:
+      type: object
+      additionalProperties: false
+      properties:
+        variant_id:
+          type: string
+          format: uuid
+        quantity:
+          type: number
+          minimum: 0.001
+        unit_price:
+          type: number
+          format: double
+          minimum: 0
+    PriceQuote:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceQuoteItem'
+        subtotal:
+          type: number
+          format: double
+          minimum: 0
+        discount_total:
+          type: number
+          format: double
+          minimum: 0
+        tax_total:
+          type: number
+          format: double
+          minimum: 0
+        grand_total:
+          type: number
+          format: double
+          minimum: 0
+        currency:
+          type: string
+    PriceQuoteItem:
+      type: object
+      additionalProperties: false
+      properties:
+        variant_id:
+          type: string
+          format: uuid
+        quantity:
+          type: number
+        unit_price:
+          type: number
+          format: double
+          minimum: 0
+        discount:
+          type: number
+          format: double
+          minimum: 0
+        net_amount:
+          type: number
+          format: double
+          minimum: 0
+    PromotionCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        priority:
+          type: integer
+        stacking_mode:
+          type: string
+          enum:
+          - STACKABLE
+          - EXCLUSIVE
+          - BEST_ONLY
+        valid_from:
+          type: string
+          format: date-time
+        valid_to:
+          type: string
+          format: date-time
+      required:
+      - code
+      - name
+      - valid_from
+      - valid_to
+    Promotion:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        priority:
+          type: integer
+        stacking_mode:
+          type: string
+        version:
+          type: integer
+        valid_from:
+          type: string
+          format: date-time
+        valid_to:
+          type: string
+          format: date-time
+    ApprovalRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        comment:
+          type: string
+    PromotionEvaluateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        store_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        voucher_codes:
+          type: array
+          items:
+            type: string
+    PromotionEvaluation:
+      type: object
+      additionalProperties: false
+      properties:
+        applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedPromotion'
+        discount_total:
+          type: number
+          format: double
+          minimum: 0
+        net_total:
+          type: number
+          format: double
+          minimum: 0
+        currency:
+          type: string
+    AppliedPromotion:
+      type: object
+      additionalProperties: false
+      properties:
+        promotion_id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        version:
+          type: integer
+        discount:
+          type: number
+          format: double
+          minimum: 0
+        snapshot:
+          type: object
+          additionalProperties: true
+    OpenSessionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        terminal_id:
+          type: string
+          format: uuid
+        opening_cash:
+          type: number
+          format: double
+          minimum: 0
+        currency:
+          type: string
+      required:
+      - terminal_id
+      - opening_cash
+      - currency
+    CashMovementRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        amount:
+          type: number
+          format: double
+          minimum: 0
+        reason:
+          type: string
+        reference:
+          type: string
+      required:
+      - amount
+    CloseSessionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        closing_cash:
+          type: number
+          format: double
+          minimum: 0
+        comment:
+          type: string
+      required:
+      - closing_cash
+    PosSession:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        terminal_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        opened_at:
+          type: string
+          format: date-time
+        closed_at:
+          type: string
+          format: date-time
+        opening_cash:
+          type: number
+          format: double
+          minimum: 0
+        closing_cash:
+          type: number
+          format: double
+          minimum: 0
+        expected_cash:
+          type: number
+          format: double
+          minimum: 0
+        variance:
+          type: number
+        currency:
+          type: string
+    CashMovement:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        amount:
+          type: number
+          format: double
+          minimum: 0
+        reason:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    PosSessionSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        session:
+          $ref: '#/components/schemas/PosSession'
+        sales_total:
+          type: number
+          format: double
+          minimum: 0
+        payment_total:
+          type: number
+          format: double
+          minimum: 0
+        cash_in:
+          type: number
+          format: double
+          minimum: 0
+        cash_out:
+          type: number
+          format: double
+          minimum: 0
+        refund_total:
+          type: number
+          format: double
+          minimum: 0
+    SalesOrderCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        store_id:
+          type: string
+          format: uuid
+        terminal_id:
+          type: string
+          format: uuid
+        pos_session_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        currency:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalesOrderItemRequest'
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentCreateRequest'
+        voucher_codes:
+          type: array
+          items:
+            type: string
+      required:
+      - store_id
+      - currency
+      - items
+    SalesOrderItemRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        variant_id:
+          type: string
+          format: uuid
+        quantity:
+          type: number
+          minimum: 0.001
+        unit_price:
+          type: number
+          format: double
+          minimum: 0
+    ConfirmOrderRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        payment_required:
+          type: boolean
+          default: true
+    VoidOrderRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+        approval_id:
+          type: string
+          format: uuid
+      required:
+      - reason
+    SalesOrder:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_no:
+          type: string
+        status:
+          type: string
+        store_id:
+          type: string
+          format: uuid
+        terminal_id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        currency:
+          type: string
+        subtotal:
+          type: number
+          format: double
+          minimum: 0
+        discount_total:
+          type: number
+          format: double
+          minimum: 0
+        tax_total:
+          type: number
+          format: double
+          minimum: 0
+        grand_total:
+          type: number
+          format: double
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalesOrderItem'
+        promotions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AppliedPromotion'
+    SalesOrderItem:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        variant_id:
+          type: string
+          format: uuid
+        sku:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: number
+        unit_price:
+          type: number
+          format: double
+          minimum: 0
+        discount:
+          type: number
+          format: double
+          minimum: 0
+        tax:
+          type: number
+          format: double
+          minimum: 0
+        net_amount:
+          type: number
+          format: double
+          minimum: 0
+    PaymentCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        sales_order_id:
+          type: string
+          format: uuid
+        provider_id:
+          type: string
+          format: uuid
+        method:
+          type: string
+        amount:
+          type: number
+          format: double
+          minimum: 0
+        currency:
+          type: string
+        reference:
+          type: string
+      required:
+      - sales_order_id
+      - method
+      - amount
+      - currency
+    PaymentProcessRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        return_url:
+          type: string
+        customer_token:
+          type: string
+    Payment:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        payment_no:
+          type: string
+        sales_order_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        method:
+          type: string
+        provider:
+          type: string
+        amount:
+          type: number
+          format: double
+          minimum: 0
+        currency:
+          type: string
+        provider_reference:
+          type: string
+    PaymentAttemptList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentAttempt'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    PaymentAttempt:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        payment_id:
+          type: string
+          format: uuid
+        attempt_no:
+          type: integer
+        status:
+          type: string
+        provider_reference:
+          type: string
+        error_code:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    RefundRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        amount:
+          type: number
+          format: double
+          minimum: 0
+        reason:
+          type: string
+        approval_id:
+          type: string
+          format: uuid
+      required:
+      - amount
+      - reason
+    Refund:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        payment_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: double
+          minimum: 0
+        status:
+          type: string
+        reason:
+          type: string
+    WebhookRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        event_id:
+          type: string
+        event_type:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+        payload:
+          type: object
+          additionalProperties: true
+      required:
+      - event_id
+      - event_type
+      - payload
+    WebhookAccepted:
+      type: object
+      additionalProperties: false
+      properties:
+        accepted:
+          type: boolean
+        event_id:
+          type: string
+    StockReservationRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        warehouse_id:
+          type: string
+          format: uuid
+        sales_order_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockReservationItem'
+      required:
+      - warehouse_id
+      - items
+    StockReservationItem:
+      type: object
+      additionalProperties: false
+      properties:
+        variant_id:
+          type: string
+          format: uuid
+        quantity:
+          type: number
+          minimum: 0.001
+      required:
+      - variant_id
+      - quantity
+    StockReservation:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        warehouse_id:
+          type: string
+          format: uuid
+        sales_order_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockReservationItem'
+    Stock:
+      type: object
+      additionalProperties: false
+      properties:
+        warehouse_id:
+          type: string
+          format: uuid
+        variant_id:
+          type: string
+          format: uuid
+        on_hand:
+          type: number
+        reserved:
+          type: number
+        available:
+          type: number
+        version:
+          type: integer
+    StockAdjustmentRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        warehouse_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              variant_id:
+                type: string
+                format: uuid
+              quantity:
+                type: number
+              direction:
+                type: string
+                enum:
+                - IN
+                - OUT
+      required:
+      - warehouse_id
+      - reason
+      - items
+    StockAdjustment:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        warehouse_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+    StockTransferRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        source_warehouse_id:
+          type: string
+          format: uuid
+        destination_warehouse_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockReservationItem'
+      required:
+      - source_warehouse_id
+      - destination_warehouse_id
+      - items
+    ReceiveTransferRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        received_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockReservationItem'
+    StockTransfer:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        source_warehouse_id:
+          type: string
+          format: uuid
+        destination_warehouse_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockReservationItem'
+    StockLedgerList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    PurchaseOrderCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        supplier_id:
+          type: string
+          format: uuid
+        warehouse_id:
+          type: string
+          format: uuid
+        currency:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseOrderItem'
+      required:
+      - supplier_id
+      - warehouse_id
+      - currency
+      - items
+    PurchaseOrderItem:
+      type: object
+      additionalProperties: false
+      properties:
+        variant_id:
+          type: string
+          format: uuid
+        quantity:
+          type: number
+        unit_price:
+          type: number
+          format: double
+          minimum: 0
+    PurchaseOrder:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_no:
+          type: string
+        status:
+          type: string
+        supplier_id:
+          type: string
+          format: uuid
+        warehouse_id:
+          type: string
+          format: uuid
+        grand_total:
+          type: number
+          format: double
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PurchaseOrderItem'
+    GoodsReceiptCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        purchase_order_id:
+          type: string
+          format: uuid
+        warehouse_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockReservationItem'
+      required:
+      - purchase_order_id
+      - warehouse_id
+      - items
+    GoodsReceipt:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        receipt_no:
+          type: string
+        status:
+          type: string
+        purchase_order_id:
+          type: string
+          format: uuid
+    SupplierCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+      required:
+      - code
+      - name
+    Supplier:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        active:
+          type: boolean
+    LoyaltyAccount:
+      type: object
+      additionalProperties: false
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+        balance:
+          type: integer
+        tier:
+          type: string
+    LoyaltyRedeemRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+        points:
+          type: integer
+          minimum: 1
+        reference:
+          type: string
+      required:
+      - customer_id
+      - points
+    LoyaltyEarnRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+        points:
+          type: integer
+          minimum: 1
+        reference:
+          type: string
+      required:
+      - customer_id
+      - points
+    LoyaltyTransaction:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        points:
+          type: integer
+        balance_after:
+          type: integer
+    VoucherValidateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        sales_order_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: double
+          minimum: 0
+      required:
+      - code
+    VoucherValidation:
+      type: object
+      additionalProperties: false
+      properties:
+        valid:
+          type: boolean
+        code:
+          type: string
+        discount:
+          type: number
+          format: double
+          minimum: 0
+        reason:
+          type: string
+    VoucherRedeemRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        sales_order_id:
+          type: string
+          format: uuid
+      required:
+      - code
+      - sales_order_id
+    VoucherRedemption:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        sales_order_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+    Voucher:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        status:
+          type: string
+        discount_type:
+          type: string
+        discount_value:
+          type: number
+          format: double
+          minimum: 0
+        max_redemption:
+          type: integer
+        redeemed_count:
+          type: integer
+    WorkflowInstance:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        definition_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        current_state:
+          type: string
+        resource_type:
+          type: string
+        resource_id:
+          type: string
+          format: uuid
+    WorkflowDefinitionCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        version:
+          type: integer
+        states:
+          type: array
+          items:
+            type: string
+        transitions:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      required:
+      - code
+      - name
+      - version
+    WorkflowDefinition:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        version:
+          type: integer
+        status:
+          type: string
+    AuditExportRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        filters:
+          type: object
+          additionalProperties: true
+        format:
+          type: string
+          enum:
+          - CSV
+          - JSON
+        reason:
+          type: string
+      required:
+      - format
+      - reason
+    ExportJob:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    RetryRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+      required:
+      - reason
+    OutboxEvent:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        aggregate_type:
+          type: string
+        aggregate_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        attempts:
+          type: integer
+        next_attempt_at:
+          type: string
+          format: date-time
+    AuditLog:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        action:
+          type: string
+        module:
+          type: string
+        resource_type:
+          type: string
+        resource_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        request_id:
+          type: string
+        trace_id:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties: true
+    SecurityEvent:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        user_id:
+          type: string
+          format: uuid
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+    LoginHistory:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        ip_address:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+    StatusHistoryList:
+      type: object
+      additionalProperties: false
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    PaginationMeta:
+      type: object
+      additionalProperties: false
+      properties:
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+    ReportResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        meta:
+          type: object
+          additionalProperties: true
+    Terminal:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        store_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+    Company:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        active:
+          type: boolean
+    Region:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        company_id:
+          type: string
+          format: uuid
+    Store:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        region_id:
+          type: string
+          format: uuid
+        company_id:
+          type: string
+          format: uuid
+        active:
+          type: boolean
+    Warehouse:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        store_id:
+          type: string
+          format: uuid
+        active:
+          type: boolean
+    ListItem:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+    CompanyList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Company'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    RegionList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Region'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    StoreList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Store'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    WarehouseList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warehouse'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    TerminalList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Terminal'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    ProductList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    CustomerList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Customer'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    PromotionList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Promotion'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    SupplierList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Supplier'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    StockList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Stock'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    BarcodeList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Barcode'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    AddressList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    SalesOrderList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalesOrder'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    LoyaltyTransactionList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoyaltyTransaction'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    WorkflowHistoryItem:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          format: int64
+        workflow_instance_id:
+          type: string
+          format: uuid
+        from_state_id:
+          type: string
+          format: uuid
+          nullable: true
+        to_state_id:
+          type: string
+          format: uuid
+        from_state:
+          type: string
+          nullable: true
+        to_state:
+          type: string
+        action:
+          type: string
+        comment:
+          type: string
+          nullable: true
+        acted_by:
+          type: string
+          format: uuid
+          nullable: true
+        acted_at:
+          type: string
+          format: date-time
+      required:
+      - id
+      - workflow_instance_id
+      - to_state_id
+      - action
+      - acted_at
+    WorkflowHistoryList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowHistoryItem'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    WorkflowDefinitionList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowDefinition'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    AuditLogList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    SecurityEventList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecurityEvent'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    LoginHistoryList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LoginHistory'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+    OutboxList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OutboxEvent'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+x-architecture:
+  style: modular-monolith
+  idempotency: required for financial and critical commands
+  audit: all state-changing commands emit audit records
+  outbox: domain/integration events use transactional outbox
+  tenant_isolation: application authorization plus PostgreSQL RLS
+  money: decimal semantics; never binary floating point in persistence
+  timezone: timestamps are UTC; store-local timezone belongs to organization/store
+    context

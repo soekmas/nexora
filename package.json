@@ -1,0 +1,13 @@
+{
+  "name": "nexora-workspace",
+  "private": true,
+  "scripts": {
+    "build": "pnpm --filter @nexora/pos-web build",
+    "dev:pos": "pnpm --filter @nexora/pos-web dev",
+    "lint": "pnpm --filter @nexora/pos-web lint",
+    "test": "pnpm --filter @nexora/pos-web test"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3"
+  }
+}

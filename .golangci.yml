@@ -1,0 +1,22 @@
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - misspell
+    - unconvert
+    - revive
+
+issues:
+  exclude-dirs:
+    - vendor
+    - .next
+    - node_modules
